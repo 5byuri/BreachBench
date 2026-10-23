@@ -1,7 +1,16 @@
 # BreachBench 
-BreachBench runs adversarial security benchmarks against deterministically generated OCI container images
+<p align="center">
+    <picture>
+      <source srcset="docs/logo.svg">
+      <img src="docs/logo.svg" width="240" height="80">
+  </picture>
+</p>
 
-Built on the OCI Community’s [Container Hardening Work Bench](https://gitlab.opencode.de/oci-community/tools/container-hardening-work-bench).
+<h3 align="center">BreachBench runs adversarial security benchmarks against deterministically generated OCI container images</h3>
+
+<p align="center">
+  <a href="https://gitlab.opencode.de/oci-community/tools/container-hardening-work-bench">Built on the OCI Community’s Container Hardening Work Bench.
+</p>
 
 TODO:
 
