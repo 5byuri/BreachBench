@@ -1,16 +1,17 @@
 # BreachBench 
+
 <p align="center">
+  <a href="https://devguard.org">
     <picture>
-      <source srcset="docs/logo.svg">
-      <img src="docs/logo.svg" width="240" height="80">
+      <source srcset="docs/logo_inverse_horizontal.svg"  media="(prefers-color-scheme: dark)">
+      <img src="docs/logo_horizontal.svg" alt="DevGuard by L3montree Logo" width="240" height="80">
   </picture>
+  </a>
 </p>
 
-<h3 align="center">BreachBench runs adversarial security benchmarks against deterministically generated OCI container images</h3>
+BreachBench runs adversarial security benchmarks against deterministically generated OCI container images
 
-<p align="center">
-  <a href="https://gitlab.opencode.de/oci-community/tools/container-hardening-work-bench">Built on the OCI Community’s Container Hardening Work Bench.
-</p>
+Built on the OCI Community’s [Container Hardening Work Bench](https://gitlab.opencode.de/oci-community/tools/container-hardening-work-bench).
 
 TODO:
 
