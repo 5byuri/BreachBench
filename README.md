@@ -29,7 +29,9 @@ Make sure AI is really only allowed to be attacking this one sandbox, only targe
 # FAQ
 
 > Why don't I just use Distroless?
+
 [Distroless does not cover any Application](https://github.com/GoogleContainerTools/distroless#what-images-are-available)
+
 [Other Tradeoffs, such as Maintainability & Shipping are difficult](https://docs.docker.com/dhi/explore/security-concepts/distroless/#addressing-common-tradeoffs)
 
 Made without Agents
