@@ -3,7 +3,7 @@ Copyright © 2026 NAME HERE <EMAIL ADDRESS>
 */
 package main
 
-import "BreachBench/cmd"
+import "BreachBench/breachbench/cmd"
 
 func main() {
 	cmd.Execute()

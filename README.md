@@ -1,12 +1,10 @@
 # BreachBench 
 
 <p align="center">
-  <a href="https://devguard.org">
     <picture>
-      <source srcset="docs/logo_inverse_horizontal.svg"  media="(prefers-color-scheme: dark)">
-      <img src="docs/logo_horizontal.svg" alt="DevGuard by L3montree Logo" width="240" height="80">
+      <source srcset="docs/logo.svg">
+      <img src="docs/logo.svg" width="240" height="80">
   </picture>
-  </a>
 </p>
 
 BreachBench runs adversarial security benchmarks against deterministically generated OCI container images
