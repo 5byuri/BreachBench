@@ -16,7 +16,7 @@ function fixture(t, overrides = {}) {
     calls.push([exe, ...args]);
     if (exe === 'git') return PIN;
     if (exe === 'go') return '';
-    if (exe === 'trivy') return JSON.stringify({ Results: [] });
+    if (exe === 'trivy') return JSON.stringify({ Results: args.at(-1).endsWith('deployment') ? [{ Type: 'kubernetes', Target: 'pod.json', MisconfSummary: { Successes: 1 } }] : [] });
     if (args[0] === 'image') return JSON.stringify([{ Id: args.at(-1).includes('baseline') || args.at(-1).startsWith('breachbench/source:') || args.at(-1) === 'sha256:source' ? 'sha256:source' : 'sha256:candidate', Size: 100, Config: { User: '10001:10001' } }]);
     if (args[0] === 'inspect' && args.includes('{{json .State.Running}}')) return 'true';
     return '134217728/500000000/64';

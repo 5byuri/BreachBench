@@ -147,6 +147,16 @@ export class Workflow {
     fs.writeFileSync(path.join(this.root, 'Containerfile.candidate'), remediation.dockerfile);
     fs.writeFileSync(path.join(this.root, 'network-policy.json'), JSON.stringify(networkPolicy(this.c), null, 2));
     fs.writeFileSync(path.join(this.root, 'pod-controls.json'), JSON.stringify({ automountServiceAccountToken: false, securityContext: { runAsNonRoot: true, runAsUser: Number(this.c.user.split(':')[0]), runAsGroup: Number(this.c.user.split(':')[1]), seccompProfile: { type: 'RuntimeDefault' } }, containers: [{ name: 'app', image: this.c.candidate, securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: ['ALL'] } }, resources: { limits: { memory: this.c.memory.toUpperCase().replace('M', 'Mi').replace('G', 'Gi'), cpu: String(this.c.cpus) } } }] }, null, 2));
+    const deploymentDir = path.join(this.root, 'deployment'); fs.mkdirSync(deploymentDir, { recursive: true });
+    const pod = JSON.parse(fs.readFileSync(path.join(this.root, 'pod-controls.json')));
+    pod.containers[0].volumeMounts = (this.c.writable ?? ['/tmp']).map((mountPath, index) => ({ name: `writable-${index}`, mountPath }));
+    pod.volumes = (this.c.writable ?? ['/tmp']).map((_, index) => ({ name: `writable-${index}`, emptyDir: { medium: 'Memory', sizeLimit: '64Mi' } }));
+    fs.writeFileSync(path.join(deploymentDir, 'pod.json'), JSON.stringify({ apiVersion: 'v1', kind: 'Pod', metadata: { name: 'breachbench-candidate', namespace: this.c.namespace ?? 'default', labels: { app: 'breachbench-candidate' } }, spec: pod }, null, 2));
+    fs.writeFileSync(path.join(deploymentDir, 'network-policy.json'), JSON.stringify(networkPolicy(this.c), null, 2));
+    const deploymentScan = JSON.parse(this.exec('trivy', ['config', '--format', 'json', '--include-non-failures', deploymentDir]));
+    const checkedResources = (deploymentScan.Results ?? []).filter(result => result.Type === 'kubernetes').length;
+    if (!checkedResources) throw new Error('Trivy did not establish Kubernetes resource scan coverage');
+    this.save('deployment-scan', { findings: normalizeTrivy(deploymentScan), checkedResources, scope: 'Generated candidate Pod and NetworkPolicy; not a claim of applied enforcement' });
     if (this.c.observedSyscalls?.length) {
       if (this.c.observedSyscalls.some(s => !/^[a-z0-9_]+$/.test(s))) throw new Error('Invalid syscall');
       fs.writeFileSync(path.join(this.root, 'seccomp.candidate.json'), JSON.stringify({ defaultAction: 'SCMP_ACT_ERRNO', syscalls: [{ names: this.c.observedSyscalls, action: 'SCMP_ACT_ALLOW' }] }, null, 2));
@@ -219,6 +229,7 @@ export class Workflow {
     const build = this.read('build'); const functional = this.read('functionality'); const enforcement = this.read('enforcement');
     if (this.imageInfo(build.candidate).id !== build.image.id) throw new Error('Candidate changed');
     const after = this.scan(build.image.id); const before = this.read('baseline-scan');
+    after.findings.push(...this.read('deployment-scan').findings);
     // Image labels differ between scans; compare the affected component and issue.
     const findingKey = ({ target, ...finding }) => digest(finding);
     const regression = after.findings.some(f => ['CRITICAL', 'HIGH'].includes(f.severity) && !before.findings.some(old => findingKey(old) === findingKey(f)));

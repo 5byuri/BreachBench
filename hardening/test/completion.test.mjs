@@ -8,6 +8,7 @@ import { assertReviewBinding } from '../profile-integrity.mjs';
 import { planRemediation } from '../remediation.mjs';
 import { clusterManifests, fixturePolicies } from '../cluster.mjs';
 import { run } from '../lib.mjs';
+import { Workflow, PIN } from '../lib.mjs';
 
 function candidate(t) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bb-binding-'));
@@ -64,4 +65,18 @@ test('scanner and runtime subprocesses do not inherit account credentials', t =>
   t.after(() => { for (const name of names) if (previous[name] === undefined) delete process.env[name]; else process.env[name] = previous[name]; });
   const output = run(process.execPath, ['-e', `console.log(JSON.stringify(${JSON.stringify(names)}.map(name => Boolean(process.env[name]))))`]);
   assert.deepEqual(JSON.parse(output), [false, false, false, false]);
+});
+test('empty deployment scan results cannot establish configuration coverage', async t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bb-scan-coverage-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const config = JSON.parse(fs.readFileSync('hardening/demo/config.json'));
+  const workflow = new Workflow(config, { root, execute: (exe, args) => {
+    if (exe === 'git') return PIN;
+    if (exe === 'docker' && args[0] === 'image') return JSON.stringify([{ Id: 'sha256:source', Config: {}, Size: 1 }]);
+    if (exe === 'trivy') return JSON.stringify({ Results: [] });
+    return '';
+  } });
+  await workflow.invoke('inspect_container');
+  await workflow.invoke('scan_image');
+  await assert.rejects(workflow.invoke('propose_hardening'), /did not establish Kubernetes resource scan coverage/);
 });

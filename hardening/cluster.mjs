@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { run, networkPolicy } from './lib.mjs';
+import { run, networkPolicy, normalizeTrivy } from './lib.mjs';
 
 export function clusterManifests(namespace, image) {
   const securityContext = { runAsNonRoot: true, runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001, seccompProfile: { type: 'RuntimeDefault' } };
@@ -85,6 +85,14 @@ export async function verifyCluster({ output = '.breachbench/cluster', keep = fa
       k('create', 'secret', 'generic', 'database-client', '-n', namespace, `--from-file=token=${secretFile}`);
     } finally { fs.rmSync(secretFile, { force: true }); fs.rmSync(imageArchive, { force: true }); }
     apply('workloads.json', manifests.slice(3));
+    console.error('Scanning generated deployment configuration with Trivy');
+    const scanDirectory = path.join(root, 'deployment-scan-input'); fs.mkdirSync(scanDirectory, { recursive: true });
+    for (const item of [...manifests.filter(item => item.kind === 'Pod'), ...fixturePolicies(namespace)]) fs.writeFileSync(path.join(scanDirectory, `${item.kind}-${item.metadata.name}.json`), JSON.stringify(item, null, 2));
+    const scan = JSON.parse(execute('docker', ['run', '--rm', '--mount', `type=bind,source=${scanDirectory},target=/deployment,readonly`, 'aquasec/trivy:0.76.1', 'config', '--include-non-failures', '--format', 'json', '/deployment']));
+    report.deploymentScanResources = (scan.Results ?? []).filter(result => result.Type === 'kubernetes').length;
+    if (report.deploymentScanResources < manifests.filter(item => item.kind === 'Pod').length) throw new Error('Trivy did not scan every workload Pod');
+    report.deploymentConfigurationFindings = normalizeTrivy(scan);
+    if (report.deploymentConfigurationFindings.some(f => ['HIGH', 'CRITICAL'].includes(f.severity))) throw new Error('Generated deployment contains HIGH/CRITICAL configuration findings');
     k('wait', '--for=condition=Ready', 'pod', '--all', '-n', namespace, '--timeout=180s');
     const ip = name => JSON.parse(k('get', 'service', name, '-n', namespace, '-o', 'json')).spec.clusterIP;
     const ips = Object.fromEntries(['app', 'api', 'database', 'blocked'].map(name => [name, ip(name)]));
@@ -112,7 +120,10 @@ export async function verifyCluster({ output = '.breachbench/cluster', keep = fa
       if (JSON.parse(result).status?.allowed !== false) throw new Error('Unexpected secret-list permission');
     });
     report.status = 'passed';
-  } catch (error) { report.error = error.message; }
+  } catch (error) {
+    report.error = error.message;
+    if (error.diagnostic) fs.writeFileSync(path.join(root, 'tool-error.log'), error.diagnostic, { mode: 0o600 });
+  }
   finally {
     if (created && !keep) {
       try { execute(path.join(tools, 'kind'), ['delete', 'cluster', '--name', name]); report.cleanedUp = true; }

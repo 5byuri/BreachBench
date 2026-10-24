@@ -2,6 +2,8 @@
 
 The seven CLI tools are implemented and integrated with the Go entry point through `go run . harden`. Gemini in Antigravity can inspect the repository, choose workload configuration and finding-specific remediation recipes, execute the tools and review the resulting evidence. Direct Gemini API access remains optional; the supplied account currently reports an exhausted monthly spending cap.
 
+Latest local validation: 31 Node tests passed; Go CLI checks passed; all 16 live cluster/credential checks passed; Trivy established Kubernetes coverage for 13 generated resources; all three CPU/PID/memory saturation checks passed. The finding-driven candidate passed functionality and enforcement. Hosted Linux checks also passed in [run 40116288681](https://github.com/5byuri/BreachBench/actions/runs/40116288681). Generated deployment scans are acceptance inputs; empty Kubernetes scan coverage is rejected.
+
 ## Verified controls
 
 | Requirement | Implementation and evidence |
