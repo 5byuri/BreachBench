@@ -1,0 +1,29 @@
+{
+  "image": "breachbench/demo:baseline",
+  "candidate": "breachbench/demo:candidate",
+  "context": "hardening/demo",
+  "dockerfile": "hardening/demo/Containerfile",
+  "user": "10001:10001",
+  "memory": "128m",
+  "cpus": 0.5,
+  "pids": 64,
+  "writable": ["/tmp"],
+  "startupMs": 1500,
+  "seccompProfile": "hardening/demo/seccomp.json",
+  "profilesReviewed": true,
+  "tests": [
+    { "name": "HTTP health", "category": "foreground", "argv": ["docker", "exec", "{container}", "python", "-c", "import urllib.request; assert urllib.request.urlopen('http://127.0.0.1:8080/').read()==b'healthy'"] },
+    { "name": "Background jobs advance", "category": "background", "argv": ["docker", "exec", "{container}", "python", "-c", "import urllib.request,time; u='http://127.0.0.1:8080/jobs'; a=int(urllib.request.urlopen(u).read()); time.sleep(.5); assert int(urllib.request.urlopen(u).read())>a"] },
+    { "name": "Rare export", "category": "uncommon", "argv": ["docker", "exec", "{container}", "python", "-c", "import urllib.request; assert urllib.request.urlopen('http://127.0.0.1:8080/rare/export').read()==b'uncommon-path-ok'"] }
+  ],
+  "enforcementTests": [
+    { "name": "Non-root identity", "category": "identity", "argv": ["docker", "exec", "{container}", "python", "-c", "import os; assert os.getuid()==10001"] },
+    { "name": "Root filesystem write denied", "category": "filesystem", "argv": ["docker", "exec", "{container}", "python", "-c", "import os,errno; p='/app/app.py';\ntry: os.open(p,os.O_WRONLY); raise AssertionError('write allowed')\nexcept OSError as e: assert e.errno==errno.EROFS\nopen('/tmp/write-test','w').close()"] },
+    { "name": "No effective capabilities", "category": "capabilities", "argv": ["docker", "exec", "{container}", "python", "-c", "s=dict(x.split(':',1) for x in open('/proc/1/status') if ':' in x); assert all(int(s[k].strip(),16)==0 for k in ['CapEff','CapPrm','CapBnd'])"] },
+    { "name": "Privilege escalation disabled", "category": "privilege-escalation", "argv": ["docker", "exec", "{container}", "python", "-c", "s=dict(x.split(':',1) for x in open('/proc/1/status') if ':' in x); assert s['NoNewPrivs'].strip()=='1'"] },
+    { "name": "Harmless syscall explicitly denied", "category": "syscalls", "argv": ["docker", "exec", "{container}", "python", "-c", "import ctypes,errno,platform; c=ctypes.CDLL(None,use_errno=True); n={'x86_64':110,'aarch64':173}[platform.machine()]; assert c.syscall(n)==-1 and ctypes.get_errno()==errno.EPERM; s=dict(x.split(':',1) for x in open('/proc/1/status') if ':' in x); assert s['Seccomp'].strip()=='2'"] },
+    { "name": "Outbound blocked with no route", "category": "network", "argv": ["docker", "exec", "{container}", "python", "-c", "import socket,errno; s=socket.socket(); s.settimeout(2);\ntry: s.connect(('198.51.100.1',443)); raise AssertionError('connection allowed')\nexcept OSError as e: assert e.errno in [errno.ENETUNREACH,errno.EHOSTUNREACH], repr(e)"] },
+    { "name": "Resource limits set", "category": "resources", "argv": ["docker", "inspect", "--format", "{{.HostConfig.Memory}}/{{.HostConfig.NanoCpus}}/{{.HostConfig.PidsLimit}}", "{container}"], "expect": "134217728/500000000/64" }
+  ],
+  "egress": []
+}

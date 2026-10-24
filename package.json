@@ -1,0 +1,10 @@
+{
+  "name": "breachbench-hardening",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test hardening/test/*.test.mjs",
+    "harden": "node hardening/cli.mjs"
+  }
+}

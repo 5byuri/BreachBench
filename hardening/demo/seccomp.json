@@ -1,0 +1,6 @@
+{
+  "defaultAction": "SCMP_ACT_ALLOW",
+  "syscalls": [
+    { "names": ["getppid", "ptrace", "mount", "umount2", "bpf", "keyctl", "perf_event_open", "reboot", "kexec_load", "init_module", "finit_module", "delete_module", "unshare", "setns"], "action": "SCMP_ACT_ERRNO", "errnoRet": 1 }
+  ]
+}

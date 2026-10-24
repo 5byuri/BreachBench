@@ -11,6 +11,10 @@ BreachBench runs adversarial security benchmarks against deterministically gener
 
 Built on the OCI Community’s [Container Hardening Work Bench](https://gitlab.opencode.de/oci-community/tools/container-hardening-work-bench).
 
+## Gemini hardening workflow
+
+See [setup, CLI tools, demo, verification and remaining risks](hardening/README.md). The workflow uses the in-repo work-bench, Trivy, optional SlimToolkit, and runtime controls, preserving the original image for rollback. Run `npm test` for local orchestration tests; Docker/Linux integration requires the dependencies described in that guide.
+
 TODO:
 
 Mandatory:

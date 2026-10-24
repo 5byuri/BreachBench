@@ -1,0 +1,3 @@
+[submodule "container-hardening-work-bench/container-hardening-work-bench"]
+	path = container-hardening-work-bench/container-hardening-work-bench
+	url = https://gitlab.opencode.de/oci-community/tools/container-hardening-work-bench.git

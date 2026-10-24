@@ -1,0 +1,6 @@
+.env
+.env.*
+!.env.example
+.breachbench/
+node_modules/
+*.tar
