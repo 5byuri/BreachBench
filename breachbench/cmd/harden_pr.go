@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -19,9 +20,43 @@ var (
 	dockerfilePath string
 	topStars       int
 	outputDir      string
+	hardenedFile   string
+	hardenerCmd    string
 	autoFork       bool
 	dryRun         bool
 )
+
+func generateHardenedDockerfile(ctx context.Context, rawDockerfile string, analysis *hardener.DockerfileAnalysis) (string, error) {
+	fileOverride := strings.TrimSpace(hardenedFile)
+	if fileOverride == "" {
+		fileOverride = strings.TrimSpace(os.Getenv("HARDENED_DOCKERFILE_PATH"))
+	}
+	if fileOverride != "" {
+		b, err := os.ReadFile(fileOverride)
+		if err != nil {
+			return "", fmt.Errorf("read --hardened-file %s: %w", fileOverride, err)
+		}
+		return string(b), nil
+	}
+
+	cmdOverride := strings.TrimSpace(hardenerCmd)
+	if cmdOverride == "" {
+		cmdOverride = strings.TrimSpace(os.Getenv("BREACHBENCH_HARDENER_CMD"))
+	}
+	if cmdOverride != "" {
+		c := exec.CommandContext(ctx, "sh", "-c", cmdOverride)
+		c.Stdin = strings.NewReader(rawDockerfile)
+		out, err := c.Output()
+		if err != nil {
+			return "", fmt.Errorf("run --hardener-cmd %q: %w", cmdOverride, err)
+		}
+		if len(strings.TrimSpace(string(out))) > 0 {
+			return string(out), nil
+		}
+	}
+
+	return hardener.RenderHardenedDockerfile(analysis)
+}
 
 var hardenPrCmd = &cobra.Command{
 	Use:   "harden-pr",
@@ -38,7 +73,7 @@ a hardened multi-stage FROM scratch Containerfile using the OCI Community's Cont
 			return fmt.Errorf("either --top-stars (-t, e.g. --top-stars 10) or --repo (-r) must be provided")
 		}
 
-		ghToken := os.Getenv("GITHUB_TOKEN")
+		ghToken := githubbot.ResolveGitHubToken(os.Getenv("GITHUB_TOKEN"))
 		if !dryRun && ghToken == "" {
 			return fmt.Errorf("GITHUB_TOKEN environment variable is required to open Pull Requests (or pass --dry-run to preview locally)")
 		}
@@ -55,20 +90,20 @@ a hardened multi-stage FROM scratch Containerfile using the OCI Community's Cont
 			fmt.Printf("\n==> Top %d Most-Starred Repositories Matching Distro Base Regex:\n", len(targets))
 			for i, t := range targets {
 				fmt.Printf("  [%2d] %-35s (%7d ⭐) | %-24s | FROM %s\n",
-					i+1, t.FullName, t.Stars, t.DockerfilePath, t.MatchedBase)
+					i+1, t.FullName, t.Stars, t.DockerfilePath, t.RuntimeBaseImage)
 			}
 
 			for i, t := range targets {
 				fmt.Printf("\n================================================================================\n")
 				fmt.Printf("==> [%d/%d] Hardening %s (%d ⭐) — %s (Base: %s)\n",
-					i+1, len(targets), t.FullName, t.Stars, t.DockerfilePath, t.MatchedBase)
+					i+1, len(targets), t.FullName, t.Stars, t.DockerfilePath, t.RuntimeBaseImage)
 				fmt.Printf("================================================================================\n")
 
-				analysis, err := hardener.AnalyzeDockerfile(ctx, t.RawDockerfile, os.Getenv("GEMINI_API_KEY"))
+				analysis, err := hardener.AnalyzeDockerfile(ctx, t.DockerfileContent, os.Getenv("GEMINI_API_KEY"))
 				if err != nil {
 					return fmt.Errorf("analyze %s: %w", t.FullName, err)
 				}
-				hardenedDockerfile, err := hardener.RenderHardenedDockerfile(analysis)
+				hardenedDockerfile, err := generateHardenedDockerfile(ctx, t.DockerfileContent, analysis)
 				if err != nil {
 					return fmt.Errorf("render %s: %w", t.FullName, err)
 				}
@@ -90,7 +125,7 @@ a hardened multi-stage FROM scratch Containerfile using the OCI Community's Cont
 					if err := os.MkdirAll(repoOut, 0o755); err != nil {
 						return fmt.Errorf("mkdir %s: %w", repoOut, err)
 					}
-					_ = os.WriteFile(filepath.Join(repoOut, "Dockerfile.original"), []byte(t.RawDockerfile), 0o644)
+					_ = os.WriteFile(filepath.Join(repoOut, "Dockerfile.original"), []byte(t.DockerfileContent), 0o644)
 					_ = os.WriteFile(filepath.Join(repoOut, "Dockerfile.hardened"), []byte(hardenedDockerfile), 0o644)
 					_ = os.WriteFile(filepath.Join(repoOut, "PR_REPORT.md"), []byte(prBody), 0o644)
 					fmt.Printf("==> Saved artifacts to %s/\n", repoOut)
@@ -143,7 +178,7 @@ a hardened multi-stage FROM scratch Containerfile using the OCI Community's Cont
 		}
 
 		fmt.Printf("==> Rendering hardened multi-stage FROM scratch Dockerfile (deb2scratch)...\n")
-		hardenedDockerfile, err := hardener.RenderHardenedDockerfile(analysis)
+		hardenedDockerfile, err := generateHardenedDockerfile(ctx, rawDockerfile, analysis)
 		if err != nil {
 			return fmt.Errorf("failed to render hardened Dockerfile: %w", err)
 		}
@@ -199,6 +234,8 @@ func init() {
 	hardenPrCmd.Flags().StringVarP(&targetRepo, "repo", "r", "", "Target a single GitHub repository in owner/repo format")
 	hardenPrCmd.Flags().StringVarP(&dockerfilePath, "dockerfile", "f", "Dockerfile", "Path to the Dockerfile inside the repository")
 	hardenPrCmd.Flags().StringVarP(&outputDir, "output-dir", "o", "", "Directory to save original & hardened Dockerfiles and PR reports")
+	hardenPrCmd.Flags().StringVar(&hardenedFile, "hardened-file", "", "Path to a pre-generated hardened Dockerfile to commit directly (overrides built-in hardener)")
+	hardenPrCmd.Flags().StringVar(&hardenerCmd, "hardener-cmd", "", "External shell command/binary that reads the raw Dockerfile from stdin and prints the hardened Dockerfile to stdout")
 	hardenPrCmd.Flags().BoolVar(&autoFork, "fork", false, "Automatically fork the target repo into your GitHub account before opening the PR")
 	hardenPrCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Fetch and harden the Dockerfile(s) and print previews without pushing to GitHub")
 

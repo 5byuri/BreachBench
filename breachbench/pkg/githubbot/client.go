@@ -50,13 +50,36 @@ type Client struct {
 	baseURL    string
 }
 
+// ResolveGitHubToken returns GITHUB_TOKEN from the environment, falling back to git credential fill.
+func ResolveGitHubToken(envToken string) string {
+	if tok := strings.TrimSpace(envToken); tok != "" {
+		return tok
+	}
+	return gitCredentialToken()
+}
+
+func gitCredentialToken() string {
+	cmd := exec.Command("git", "credential", "fill")
+	cmd.Stdin = strings.NewReader("protocol=https\nhost=github.com\n\n")
+	out, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+	for _, line := range strings.Split(string(out), "\n") {
+		if strings.HasPrefix(line, "password=") {
+			return strings.TrimSpace(strings.TrimPrefix(line, "password="))
+		}
+	}
+	return ""
+}
+
 // NewClient initializes a new GitHub API client.
 func NewClient(token string) *Client {
 	return &Client{
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
-		token:   strings.TrimSpace(token),
+		token:   ResolveGitHubToken(token),
 		baseURL: defaultBaseURL,
 	}
 }
@@ -111,6 +134,12 @@ func (c *Client) doJSON(ctx context.Context, method, path string, reqBody any, r
 			Message string `json:"message"`
 		}
 		_ = json.Unmarshal(rawResp, &ghErr)
+		if resp.StatusCode == http.StatusForbidden && strings.Contains(ghErr.Message, "Resource not accessible by personal access token") {
+			if fallback := gitCredentialToken(); fallback != "" && fallback != c.token {
+				c.token = fallback
+				return c.doJSON(ctx, method, path, reqBody, respOut)
+			}
+		}
 		if ghErr.Message != "" {
 			return resp.StatusCode, fmt.Errorf("github api %s %s failed (HTTP %d): %s", method, path, resp.StatusCode, ghErr.Message)
 		}

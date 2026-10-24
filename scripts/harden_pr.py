@@ -53,6 +53,23 @@ def log_verbose(msg: str):
         print(f"    [trace] {msg}")
 
 
+def get_git_credential_token() -> str:
+    try:
+        out = subprocess.check_output(
+            ["git", "credential", "fill"],
+            input="protocol=https\nhost=github.com\n\n",
+            text=True,
+            timeout=5,
+            stderr=subprocess.DEVNULL,
+        )
+        for line in out.splitlines():
+            if line.startswith("password="):
+                return line.split("=", 1)[1].strip()
+    except Exception:
+        pass
+    return ""
+
+
 def github_request(method: str, path: str, token: str = "", payload: dict = None) -> dict:
     url = f"https://api.github.com{path}"
     log_verbose(f"HTTP {method} {url}")
@@ -76,6 +93,11 @@ def github_request(method: str, path: str, token: str = "", payload: dict = None
             return json.loads(body) if body else {}
     except urllib.error.HTTPError as e:
         err_body = e.read().decode("utf-8", errors="replace")
+        if e.code == 403 and "Resource not accessible by personal access token" in err_body:
+            fallback_tok = get_git_credential_token()
+            if fallback_tok and fallback_tok != token:
+                log_verbose("Fine-grained PAT lacked write scope (403); retrying with git credential token...")
+                return github_request(method, path, token=fallback_tok, payload=payload)
         raise RuntimeError(f"GitHub API {method} {path} failed ({e.code}): {err_body}") from e
 
 
@@ -599,6 +621,42 @@ flowchart LR
 """
 
 
+def generate_hardened_dockerfile(
+    raw_dockerfile: str,
+    analysis: dict,
+    hardened_file: str = "",
+    hardener_cmd: str = "",
+) -> str:
+    """
+    AI Agent / External Hardener Plug-in Entrypoint.
+    Priority:
+      1. --hardened-file (or HARDENED_DOCKERFILE_PATH): read pre-generated hardened Dockerfile from disk
+      2. --hardener-cmd (or BREACHBENCH_HARDENER_CMD): invoke external command with raw_dockerfile on stdin
+      3. Built-in render_hardened_dockerfile(analysis) fallback
+    """
+    hardened_file = hardened_file or os.environ.get("HARDENED_DOCKERFILE_PATH", "")
+    hardener_cmd = hardener_cmd or os.environ.get("BREACHBENCH_HARDENER_CMD", "")
+
+    if hardened_file:
+        log_verbose(f"Loading pre-generated hardened Dockerfile from: {hardened_file}")
+        with open(hardened_file, "r", encoding="utf-8") as f:
+            return f.read()
+
+    if hardener_cmd:
+        log_verbose(f"Executing external hardener command: {hardener_cmd}")
+        out = subprocess.check_output(
+            hardener_cmd,
+            input=raw_dockerfile,
+            shell=True,
+            text=True,
+            timeout=180,
+        )
+        if out.strip():
+            return out
+
+    return render_hardened_dockerfile(analysis)
+
+
 def main():
     global VERBOSE
     parser = argparse.ArgumentParser(
@@ -619,6 +677,16 @@ def main():
         default="",
         help="Optional directory to save original & hardened Dockerfiles and PR reports",
     )
+    parser.add_argument(
+        "--hardened-file",
+        default="",
+        help="Path to a pre-generated hardened Dockerfile to commit directly (overrides built-in hardener)",
+    )
+    parser.add_argument(
+        "--hardener-cmd",
+        default="",
+        help="External shell command/binary that reads the raw Dockerfile from stdin and prints the hardened Dockerfile to stdout",
+    )
     parser.add_argument("--fork", action="store_true", help="Fork the repository into the authenticated account before opening the PR")
     parser.add_argument("--dry-run", action="store_true", help="Fetch and harden Dockerfile(s) without pushing to GitHub")
     parser.add_argument("-v", "--verbose", action="store_true", help="Print full execution trace")
@@ -628,7 +696,7 @@ def main():
     if args.top_stars <= 0 and not args.repo:
         parser.error("Either --top-stars (-t, e.g. --top-stars 10) or --repo (-r) must be provided.")
 
-    token = os.environ.get("GITHUB_TOKEN", "")
+    token = os.environ.get("GITHUB_TOKEN", "") or get_git_credential_token()
     if not args.dry_run and not token:
         print("Error: GITHUB_TOKEN environment variable is required to open a PR (or use --dry-run).", file=sys.stderr)
         sys.exit(1)
@@ -654,7 +722,12 @@ def main():
             df_path = t["dockerfile_path"]
             raw_df = t["raw_dockerfile"]
             analysis = analyze_dockerfile(raw_df, os.environ.get("GEMINI_API_KEY", ""))
-            hardened_df = render_hardened_dockerfile(analysis)
+            hardened_df = generate_hardened_dockerfile(
+                raw_df,
+                analysis,
+                hardened_file=args.hardened_file,
+                hardener_cmd=args.hardener_cmd,
+            )
             pr_body = render_pr_body(full_name, df_path, analysis)
 
             if args.output_dir:
@@ -722,7 +795,12 @@ def main():
     analysis = analyze_dockerfile(raw_dockerfile, os.environ.get("GEMINI_API_KEY", ""))
 
     print("==> Rendering hardened multi-stage FROM scratch Dockerfile (deb2scratch)...")
-    hardened_dockerfile = render_hardened_dockerfile(analysis)
+    hardened_dockerfile = generate_hardened_dockerfile(
+        raw_dockerfile,
+        analysis,
+        hardened_file=args.hardened_file,
+        hardener_cmd=args.hardener_cmd,
+    )
     pr_body = render_pr_body(f"{owner}/{repo}", dockerfile_path, analysis)
 
     if args.output_dir:
