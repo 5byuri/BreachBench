@@ -1,0 +1,18 @@
+{
+  "reviewType": "agent-permission-review",
+  "reviewer": "OpenAI Codex",
+  "scope": "Python fixture AppArmor template permission review; not human approval or arbitrary application approval",
+  "policySha256": "f1d0024c925765974e136dc3f0370131755967b4fb2a8cbdf098747e1387a94a",
+  "fixtureSourceSha256": "2c453209f8f23307c2f533eaa78e7d8bd1f753fba671c33fe482aafc0d9db41d",
+  "permissionsReviewed": [
+    "Only Python executables may inherit execution permissions",
+    "Library read/map permissions and host abstractions/base are broad compatibility allowances requiring target-host inspection",
+    "Only /tmp is writable; explicit denied sentinel enables an independent negative test",
+    "IPv4 stream/datagram sockets are allowed; destination restrictions belong to verified NetworkPolicy",
+    "Mount and ptrace operations are denied; no privilege/capability grants"
+  ],
+  "remainingRisks": [
+    "Observed workload is incomplete evidence for other applications",
+    "Host AppArmor abstractions can vary; conformance does not replace target review"
+  ]
+}

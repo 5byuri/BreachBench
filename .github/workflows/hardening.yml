@@ -1,0 +1,47 @@
+name: Container hardening verification
+on:
+  push:
+    branches: [feat/gemini-container-hardening]
+  pull_request:
+    paths: ['hardening/**', '.github/workflows/hardening.yml', '.gitmodules']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: hardening-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  controls:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+      - name: Unit and integration-boundary tests
+        run: node --test hardening/test/*.test.mjs
+      - name: Install host profiling tools
+        run: sudo apt-get update && sudo apt-get install -y apparmor-utils binutils strace libunwind8
+      - name: Build fixture
+        run: docker build -f hardening/demo/Containerfile -t breachbench/demo:baseline hardening/demo
+      - name: Runtime saturation controls
+        run: node hardening/runtime-check.mjs
+      - name: AppArmor enforcement on a compatible Linux host
+        run: node hardening/lsm.mjs verify
+      - name: Install isolated cluster tools
+        run: bash hardening/setup-cluster.sh
+      - name: Kubernetes CNI policy and credential enforcement
+        run: node hardening/cluster.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hardening-control-reports
+          include-hidden-files: true
+          path: |
+            .breachbench/resources/report.json
+            .breachbench/lsm/report.json
+            .breachbench/cluster/report.json

@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { loadConfig, PIN, WORKBENCH } from './lib.mjs';
+import { createReviewBinding, assertReviewBinding, objectHash, traceManifest } from './profile-integrity.mjs';
 
 export const REQUIRED_PHASES = ['startup', 'foreground', 'background', 'uncommon', 'shutdown'];
 
@@ -32,6 +33,8 @@ const execCmd = (exe, args, opts = {}) => execFileSync(exe, args, {
   encoding: 'utf8',
   maxBuffer: 50 * 1024 * 1024,
   stdio: ['ignore', 'pipe', 'pipe'],
+  timeout: 600000,
+  env: Object.fromEntries(Object.entries(process.env).filter(([key]) => !/GEMINI|GOOGLE_API_KEY|GITHUB_TOKEN|GH_TOKEN/.test(key))),
   ...opts
 }).trim();
 
@@ -73,6 +76,7 @@ export function buildSeccompCandidate(observedInput, output, options = {}) {
     allowedSyscalls,
     excludedProbeSyscalls: ['getppid', 'getpgid'],
     ...(options.workbenchAnalysis ? { workbenchAnalysis: options.workbenchAnalysis } : {}),
+    ...(options.traceFiles ? { traceFiles: options.traceFiles } : {}),
     requiredReview: [
       'Merge foreground, startup, shutdown, background, uncommon-path and failure/recovery traces',
       'Review architecture, clone/exec, network and filesystem permissions',
@@ -173,6 +177,9 @@ export function validateSeccompCandidate(candidatePath, reviewedPath = null) {
     if (JSON.stringify(reviewedAllowed) !== JSON.stringify(allowed)) {
       throw new Error('Observed candidate syscalls drifted from the reviewed profile; re-review permissions explicitly');
     }
+    const binding = assertReviewBinding(reviewedPath, reviewedSidecar, sidecar.workbenchAnalysis?.imageId);
+    if (objectHash(traceManifest(sidecar.traceFiles)) !== binding.traceSetSha256) throw new Error('Candidate trace evidence differs from reviewed traces');
+    if (objectHash(candidate) !== binding.profileSha256) throw new Error('Candidate profile differs from reviewed profile');
     reviewedStatus = {
       reviewedPath,
       reviewed: true,
@@ -197,7 +204,7 @@ export function validateSeccompCandidate(candidatePath, reviewedPath = null) {
 
 export function reviewSeccompCandidate(candidatePath, reviewedPath, options = {}) {
   const { reviewType, reviewEvidence } = options;
-  if (!reviewType || typeof reviewType !== 'string' || ['automated', 'automated-validation-only', 'unreviewed-candidate', 'none'].includes(reviewType)) {
+  if (!['agent-permission-review', 'human-permission-review', 'manual-permission-review'].includes(reviewType)) {
     throw new Error('Explicit permission review requires a non-automated reviewType (e.g. manual-permission-review)');
   }
   const hasEvidence = reviewEvidence && (
@@ -210,6 +217,7 @@ export function reviewSeccompCandidate(candidatePath, reviewedPath, options = {}
 
   const validation = validateSeccompCandidate(candidatePath);
   const { candidate, sidecar, allowed, observedSet, additional, automatedValidation } = validation;
+  const binding = createReviewBinding(candidatePath, sidecar, reviewEvidence);
 
   const reviewedProfile = {
     defaultAction: 'SCMP_ACT_ERRNO',
@@ -223,6 +231,7 @@ export function reviewSeccompCandidate(candidatePath, reviewedPath, options = {}
     reviewType,
     reviewedAt: new Date().toISOString(),
     reviewEvidence,
+    binding,
     sourceCandidate: candidatePath,
     allowedSyscalls: allowed,
     automatedValidation,
@@ -527,7 +536,7 @@ export async function captureWorkloadTrace(configFile = 'hardening/demo/config.j
       '-e', 'LD_LIBRARY_PATH=/opt/strace/lib',
       '--entrypoint', '/opt/strace/usr/bin/strace',
       c.image,
-      '-f', '-s', '0', '-E', 'LD_LIBRARY_PATH', '-o', '/trace/server.strace',
+      '-f', '-s', '256', '-E', 'LD_LIBRARY_PATH', '-o', '/trace/server.strace',
       'python3', '/app/app.py'
     ]);
 
@@ -555,7 +564,7 @@ export async function captureWorkloadTrace(configFile = 'hardening/demo/config.j
       const clientTraceName = `client-${i}-${kind}.strace`;
       execute('docker', [
         'exec', cname,
-        '/opt/strace/usr/bin/strace', '-f', '-s', '0', '-E', 'LD_LIBRARY_PATH',
+        '/opt/strace/usr/bin/strace', '-f', '-s', '256', '-E', 'LD_LIBRARY_PATH',
         '-o', `/trace/${clientTraceName}`,
         ...inContainerCmd
       ]);
@@ -595,7 +604,8 @@ export async function captureWorkloadTrace(configFile = 'hardening/demo/config.j
   }
 
   const candidatePath = path.join(outRoot, 'seccomp.candidate.json');
-  const candidateResult = buildSeccompCandidate(observedByPhase, candidatePath, { workbenchAnalysis });
+  const traceFiles = Object.fromEntries(REQUIRED_PHASES.map(phase => [phase, path.join(tracesDir, `${phase}.strace`)]));
+  const candidateResult = buildSeccompCandidate(observedByPhase, candidatePath, { workbenchAnalysis, traceFiles });
   const validationResult = validateSeccompCandidate(candidatePath);
   const lsmReport = checkLsmSupport({ execute });
   const lsmPath = path.join(outRoot, 'lsm-support.json');

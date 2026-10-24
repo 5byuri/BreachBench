@@ -165,13 +165,16 @@ test('automated validation stays reviewed=false and permission review requires e
   assert.deepEqual(parsed, ['execve', 'poll', 'read']);
 
   const candidatePath = path.join(root, 'seccomp.candidate.json');
+  const traceFiles = Object.fromEntries(['startup', 'foreground', 'background', 'uncommon', 'shutdown'].map(phase => {
+    const file = path.join(root, `${phase}.strace`); fs.writeFileSync(file, 'read(0, "", 0) = 0'); return [phase, file];
+  }));
   const res = buildSeccompCandidate({
     startup: ['execve', 'openat'],
     foreground: ['read', 'write', 'poll'],
     background: ['openat', 'write'],
     uncommon: ['read', 'getrandom'],
     shutdown: ['close', 'exit_group']
-  }, candidatePath);
+  }, candidatePath, { workbenchAnalysis: { imageId: 'sha256:source', workbenchCommit: PIN }, traceFiles });
   assert.equal(res.reviewed, false);
   assert.equal(res.reviewType, 'unreviewed-candidate');
 
@@ -208,6 +211,7 @@ test('automated validation stays reviewed=false and permission review requires e
   const reviewRes = reviewSeccompCandidate(candidatePath, reviewedPath, {
     reviewType: 'manual-permission-review',
     reviewEvidence: {
+      sourceImageId: 'sha256:source', reviewer: 'test-fixture', method: 'Synthetic permission-review fixture',
       tracesReviewed: ['startup.strace', 'foreground.strace', 'background.strace', 'uncommon.strace', 'shutdown.strace'],
       kernelAuditVerified: ['openat2', 'fstatfs', 'statx'],
       negativeProbesConfirmedExcluded: ['getppid', 'getpgid']

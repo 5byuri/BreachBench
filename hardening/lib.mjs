@@ -2,6 +2,8 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import { assertReviewBinding } from './profile-integrity.mjs';
+import { planRemediation } from './remediation.mjs';
 
 export const WORKBENCH = 'container-hardening-work-bench/container-hardening-work-bench';
 export const PIN = '21f38fed9c32a39a694ba0fec32b933bfc0dbcd0';
@@ -42,12 +44,13 @@ export function loadConfig(file) {
     if (!review.reviewEvidence || (typeof review.reviewEvidence === 'string' && !review.reviewEvidence.trim()) || (typeof review.reviewEvidence === 'object' && !Object.keys(review.reviewEvidence).length)) {
       throw new Error('Seccomp profile review sidecar must record reviewEvidence');
     }
+    assertReviewBinding(config.seccompProfile, review);
   }
   return config;
 }
 export function normalizeTrivy(report) {
   return (report.Results ?? []).flatMap(r => [
-    ...(r.Vulnerabilities ?? []).map(v => ({ kind: 'vulnerability', id: v.VulnerabilityID, component: v.PkgName, installed: v.InstalledVersion, severity: v.Severity, fix: v.FixedVersion ? `Upgrade to ${v.FixedVersion}` : 'No fixed version reported; replace or update upstream runtime', target: r.Target })),
+    ...(r.Vulnerabilities ?? []).map(v => ({ kind: 'vulnerability', id: v.VulnerabilityID, component: v.PkgName, installed: v.InstalledVersion, fixedVersion: v.FixedVersion, severity: v.Severity, fix: v.FixedVersion ? `Upgrade to ${v.FixedVersion}` : 'No fixed version reported; replace or update upstream runtime', target: r.Target })),
     ...(r.Secrets ?? []).map(s => ({ kind: 'secret', id: s.RuleID, component: r.Target, severity: s.Severity, fix: 'Revoke/rotate credential and remove it from image layers and build inputs' })),
     ...(r.Misconfigurations ?? []).filter(m => m.Status !== 'PASS').map(m => ({ kind: 'misconfiguration', id: m.ID, component: r.Target, severity: m.Severity, fix: m.Resolution || m.Title }))
   ]);
@@ -94,6 +97,9 @@ export class Workflow {
     const pin = this.exec('git', ['-C', WORKBENCH, 'rev-parse', 'HEAD']).trim();
     if (pin !== PIN) throw new Error('Work-bench checkout differs from pinned commit');
     const source = this.imageInfo(this.c.image);
+    if (this.c.seccompProfile && fs.existsSync(`${this.c.seccompProfile}.review.json`)) {
+      assertReviewBinding(this.c.seccompProfile, JSON.parse(fs.readFileSync(`${this.c.seccompProfile}.review.json`)), source.id);
+    }
     // Invoke the actual in-repo work-bench, rather than substituting our own filesystem inspection.
     // Bind the extracted filesystem to the exact image ID and invalidate cached files when the image ID changes.
     const filesystem = process.env.BREACHBENCH_WORKBENCH_ROOT
@@ -135,7 +141,9 @@ export class Workflow {
     const sourceRef = `breachbench/source:${source.id.replace('sha256:', '')}`;
     this.exec('docker', ['tag', source.id, sourceRef]);
     this.save('build-source', { reference: sourceRef, id: source.id });
-    fs.writeFileSync(path.join(this.root, 'Containerfile.candidate'), `FROM ${sourceRef}\nUSER ${this.c.user}\n`);
+    const remediation = planRemediation(this.c, sourceRef, this.read('baseline-scan').findings);
+    this.save('remediation-plan', remediation);
+    fs.writeFileSync(path.join(this.root, 'Containerfile.candidate'), remediation.dockerfile);
     fs.writeFileSync(path.join(this.root, 'network-policy.json'), JSON.stringify(networkPolicy(this.c), null, 2));
     fs.writeFileSync(path.join(this.root, 'pod-controls.json'), JSON.stringify({ automountServiceAccountToken: false, securityContext: { runAsNonRoot: true, runAsUser: Number(this.c.user.split(':')[0]), runAsGroup: Number(this.c.user.split(':')[1]), seccompProfile: { type: 'RuntimeDefault' } }, containers: [{ name: 'app', image: this.c.candidate, securityContext: { allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: { drop: ['ALL'] } }, resources: { limits: { memory: this.c.memory.toUpperCase().replace('M', 'Mi').replace('G', 'Gi'), cpu: String(this.c.cpus) } } }] }, null, 2));
     if (this.c.observedSyscalls?.length) {
@@ -219,6 +227,7 @@ export class Workflow {
       promoted: false,
       imageChanges: { before: before.image, after: after.image, bytesRemoved: before.image.size - after.image.size },
       findings: after.findings,
+      remediation: this.read('remediation-plan'),
       scannerCoverage: { before: before.coverage, after: after.coverage, reduced: coverageReduced },
       securityRegression: regression,
       functionality: functional,
