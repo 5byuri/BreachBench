@@ -1,5 +1,7 @@
 # Local validation snapshot
 
+This historical snapshot is superseded by [the completion and host/cluster verification report](COMPLETION.md). Current unit-test counts and newer profile evidence should be read from the latest run, not the older numbers below.
+
 Validated on Windows with Ubuntu WSL2 and Docker Desktop's Linux engine. This records the demo workload, not a production deployment or Gemini API run.
 
 Installed user-local Linux tools: Go 1.27.3, Node 24.11.1, Trivy 0.76.1, and `strace` 6.8 (`~/.local/share/breachbench/tools/strace`). The official SlimToolkit 1.40.11 release asset downloaded here identifies itself as `mint ... x.1.42.2` when queried; its provenance and actual SHA256 are recorded in `.breachbench/tools/downloads/manifest.json`. No system-wide Go, Node or scanner installation was replaced.

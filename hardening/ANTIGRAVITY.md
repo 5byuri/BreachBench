@@ -18,6 +18,8 @@ The tool order is `inspect_container`, `scan_image`, `propose_hardening`, `build
 
 ## Required completion work
 
+The implementation and verification work below has now been added; read `hardening/COMPLETION.md` for commands, evidence and explicit target-host limitations. Preserve its source/profile/trace binding and truthful distinction between agent review and human approval.
+
 - Bind security-profile review to the exact source image, profile hash and workload trace hashes. Identify agent review honestly; automated structural checks are not human permission review.
 - Verify default-deny networking with explicit DNS, API and database allowances using a network-policy-capable CNI in an isolated cluster. Verify positive and negative traffic; generated manifests alone do not establish enforcement.
 - Verify scoped secret injection, absence from image layers, and disabled service-account token mounts. Never read the user's account credential files.

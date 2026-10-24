@@ -7,6 +7,7 @@ import { buildSeccompCandidate, reviewSeccompCandidate } from '../profiles.mjs';
 import { assertReviewBinding } from '../profile-integrity.mjs';
 import { planRemediation } from '../remediation.mjs';
 import { clusterManifests, fixturePolicies } from '../cluster.mjs';
+import { run } from '../lib.mjs';
 
 function candidate(t) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bb-binding-'));
@@ -55,4 +56,12 @@ test('cluster workloads do not receive broad credential mounts or root privilege
   const app = policies.find(p => p.metadata.name === 'breachbench-default-deny');
   assert.equal(app.spec.egress.length, 3);
   assert.ok(!app.spec.egress.some(r => r.to.some(t => t.ipBlock?.cidr === '0.0.0.0/0')));
+});
+test('scanner and runtime subprocesses do not inherit account credentials', t => {
+  const names = ['GEMINI_API_KEY', 'GITHUB_TOKEN', 'AWS_SECRET_ACCESS_KEY', 'GOOGLE_APPLICATION_CREDENTIALS'];
+  const previous = Object.fromEntries(names.map(name => [name, process.env[name]]));
+  for (const name of names) process.env[name] = 'synthetic-test-value';
+  t.after(() => { for (const name of names) if (previous[name] === undefined) delete process.env[name]; else process.env[name] = previous[name]; });
+  const output = run(process.execPath, ['-e', `console.log(JSON.stringify(${JSON.stringify(names)}.map(name => Boolean(process.env[name]))))`]);
+  assert.deepEqual(JSON.parse(output), [false, false, false, false]);
 });

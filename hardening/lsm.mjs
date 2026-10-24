@@ -15,8 +15,12 @@ export function generateLsmCandidate(candidateSidecar, output) {
   const files = new Set();
   for (const trace of traces) {
     const text = fs.readFileSync(trace.file, 'utf8');
-    for (const match of text.matchAll(/"(\/(?:[^"\\]|\\.)*)"/g)) {
-      try { const file = JSON.parse(`"${match[1]}"`); if (!/[\n\r*?{}\[\]]/.test(file)) files.add(file); } catch {}
+    const fileCalls = new Set(['open', 'openat', 'openat2', 'newfstatat', 'stat', 'statx', 'lstat', 'access', 'faccessat', 'faccessat2', 'readlink', 'readlinkat', 'execve', 'getcwd', 'mkdir', 'mkdirat', 'unlink', 'unlinkat', 'rename', 'renameat', 'renameat2', 'chdir']);
+    for (const line of text.split('\n')) {
+      if (!fileCalls.has(line.match(/\b([a-z][a-z0-9_]*)\(/)?.[1])) continue;
+      for (const match of line.matchAll(/"(\/(?:[^"\\]|\\.)*)"/g)) {
+        try { const file = JSON.parse(`"${match[1]}"`); if (!/[\n\r*?{}\[\]]/.test(file)) files.add(file); } catch {}
+      }
     }
   }
   const root = path.resolve(output); fs.mkdirSync(root, { recursive: true });
@@ -46,7 +50,8 @@ export async function verifyLsmFixture({ output = '.breachbench/lsm', execute = 
     const negative = { name: 'AppArmor enforced label and denied write in otherwise writable tmpfs', category: 'lsm', argv: ['docker', 'exec', '{container}', 'python', '-c', "import os,errno; assert 'breachbench-python-fixture (enforce)' in open('/proc/self/attr/current').read(); open('/tmp/breachbench-allowed','w').close();\ntry: open('/tmp/breachbench-denied','w').close(); raise AssertionError('LSM allowed denied write')\nexcept OSError as e: assert e.errno==errno.EACCES"] };
     const control = { name: 'Control write succeeds without custom LSM', category: 'lsm-control', argv: ['docker', 'exec', '{container}', 'python', '-c', "open('/tmp/breachbench-denied','w').close()"] };
     const configWithoutProfile = new Workflow(baseline, { root: path.join(root, 'control'), execute });
-    report.results = [...await configWithoutProfile.suite(imageId, true, [control]), ...await workflow.suite(imageId, true, [...baseline.tests, ...baseline.enforcementTests, negative])];
+    // Test EROFS separately: AppArmor may reject the same write with EACCES first.
+    report.results = [...await configWithoutProfile.suite(imageId, true, [control, ...baseline.enforcementTests]), ...await workflow.suite(imageId, true, [...baseline.tests, ...baseline.enforcementTests.filter(t => t.category !== 'filesystem'), negative])];
     report.status = report.results.every(r => r.passed) ? 'passed' : 'failed';
     report.apparmorEnforced = report.status === 'passed';
     report.selinuxEnforced = false;

@@ -20,9 +20,10 @@ with tarfile.open(sys.argv[1]) as image:
         if not member.isfile():
             continue
         with image.extractfile(member) as stream:
-            magic = stream.read(2)
+            magic = stream.read(4)
             stream.seek(0)
-            if magic == b'\x1f\x8b':
+            assert magic != b'\x28\xb5\x2f\xfd', 'Zstd image object requires an explicit decoder; cannot claim layer scan coverage'
+            if magic[:2] == b'\x1f\x8b':
                 with gzip.GzipFile(fileobj=stream) as decompressed:
                     absent(decompressed)
             else:

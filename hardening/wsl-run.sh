@@ -21,6 +21,18 @@ fi
 if [[ "${1:-}" == "lsm-test" ]]; then
   exec node hardening/lsm.mjs verify
 fi
+if [[ "${1:-}" == "profile-review" ]]; then
+  shift
+  exec node hardening/profiles.mjs review "$@"
+fi
+if [[ "${1:-}" == "lsm-generate" ]]; then
+  shift
+  exec node hardening/lsm.mjs generate "$@"
+fi
+if [[ "${1:-}" == "go-test" ]]; then
+  go test ./...
+  exec go run . harden --help
+fi
 if [[ "${1:-}" == "versions" ]]; then
   go version
   node --version

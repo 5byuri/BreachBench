@@ -17,7 +17,7 @@ export function configFingerprint(config) {
 export function run(exe, args, options = {}) {
   const result = spawnSync(exe, args, { encoding: 'utf8', timeout: 600000, maxBuffer: 32 * 1024 * 1024, shell: false, ...options,
     // Never pass the Gemini credential to Docker, scanners or test subprocesses.
-    env: Object.fromEntries(Object.entries(process.env).filter(([key]) => !/GEMINI|GOOGLE_API_KEY/.test(key))) });
+    env: Object.fromEntries(Object.entries(process.env).filter(([key]) => !/GEMINI|GOOGLE_API_KEY|GOOGLE_APPLICATION_CREDENTIALS|GITHUB_TOKEN|GH_TOKEN|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN|AZURE_CLIENT_SECRET/.test(key))) });
   if (result.error || result.status !== 0) {
     const error = new Error(`${exe} failed (${result.status ?? result.error?.code}); see local tool installation/daemon and configuration`);
     error.diagnostic = result.stderr || result.error?.message || 'No diagnostic output';
@@ -115,7 +115,7 @@ export class Workflow {
       fs.rmSync(filesystem, { recursive: true, force: true });
       fs.rmSync(metaFile, { force: true });
       fs.mkdirSync(filesystem, { recursive: true });
-      this.exec('go', ['run', '.', 'inspect', '--tag', this.c.image, '--output', filesystem], { cwd: WORKBENCH });
+      this.exec('go', ['run', '.', 'inspect', '--tag', source.id, '--output', filesystem], { cwd: WORKBENCH });
       fs.mkdirSync(path.dirname(metaFile), { recursive: true });
       fs.writeFileSync(metaFile, JSON.stringify({ imageId: source.id, commit: pin }, null, 2));
     }
@@ -129,7 +129,8 @@ export class Workflow {
   }
   scan_image() {
     const inspected = this.read('inspect');
-    const scan = this.scan(this.c.image);
+    if (this.imageInfo(this.c.image).id !== inspected.source.id) throw new Error('Stale evidence: source image ID changed since work-bench inspection');
+    const scan = this.scan(inspected.source.id);
     if (scan.image.id !== inspected.source.id) throw new Error('Stale evidence: source image ID changed since work-bench inspection');
     return this.save('baseline-scan', scan);
   }

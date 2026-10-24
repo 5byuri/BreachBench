@@ -27,7 +27,7 @@ export const FORBIDDEN_CANDIDATE_SYSCALLS = [
   'setfsgid', 'chown', 'fchown', 'fchownat', 'lchown'
 ];
 
-const DEFAULT_ARCHITECTURES = ['SCMP_ARCH_X86_64', 'SCMP_ARCH_X86', 'SCMP_ARCH_X32'];
+const DEFAULT_ARCHITECTURES = os.arch() === 'arm64' ? ['SCMP_ARCH_AARCH64'] : ['SCMP_ARCH_X86_64'];
 
 const execCmd = (exe, args, opts = {}) => execFileSync(exe, args, {
   encoding: 'utf8',
@@ -304,7 +304,7 @@ export function ensureWorkbenchFilesystem(image, wbRoot = process.env.BREACHBENC
     fs.rmSync(mergedFs, { recursive: true, force: true });
     fs.rmSync(metaFile, { force: true });
     fs.mkdirSync(mergedFs, { recursive: true });
-    execute('go', ['run', '.', 'inspect', '--tag', image, '--output', mergedFs], { cwd: WORKBENCH });
+    execute('go', ['run', '.', 'inspect', '--tag', imageId, '--output', mergedFs], { cwd: WORKBENCH });
     fs.writeFileSync(metaFile, JSON.stringify({
       imageId,
       image,
@@ -406,7 +406,8 @@ export function checkLsmSupport(options = {}) {
     dockerSecurityOptions,
     seccomp: {
       supported: dockerHasSeccomp,
-      enforced: dockerHasSeccomp
+      enforced: false,
+      note: 'Daemon support metadata is not per-container enforcement evidence; consult the actual syscall tests'
     },
     apparmor: {
       supported: apparmorSupported,
@@ -478,7 +479,7 @@ export async function captureWorkloadTrace(configFile = 'hardening/demo/config.j
   const wbState = ensureWorkbenchFilesystem(c.image, wbRoot, execute);
   const { mergedFs, imageId, imgMeta, cacheHit, cacheInvalidated } = wbState;
 
-  let neededLibs = ['libpython3.12.so.1.0', 'libc.so.6'];
+  let neededLibs = [];
   try {
     const readelfOut = execute('readelf', [
       '-d',
@@ -488,7 +489,7 @@ export async function captureWorkloadTrace(configFile = 'hardening/demo/config.j
     const parsedLibs = [...readelfOut.matchAll(/\[([^\]]+\.so[^\]]*)\]/g)].map(m => m[1]);
     if (parsedLibs.length) neededLibs = [...new Set(parsedLibs)].sort();
   } catch {
-    // Keep default neededLibs if host readelf is unavailable
+    // Do not invent observed dependencies when binary analysis is unavailable.
   }
   const workbenchAnalysis = {
     workbenchCommit: PIN,

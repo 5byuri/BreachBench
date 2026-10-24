@@ -1,5 +1,7 @@
 # Gemini container hardening
 
+See [implementation coverage, current host/cluster verification, commands and remaining risks](COMPLETION.md). Kubernetes network/credential conformance, actual resource saturation checks, finding-specific remediation and hosted AppArmor verification are now implemented. The older walkthrough below describes the original per-image workflow.
+
 This is a defensive workflow on `feat/gemini-container-hardening`. Node 22+ provides CLI tools without npm dependencies. The existing Go CLI remains separate. Run commands from the repository root on a disposable Linux/WSL2 runner with Docker Engine, Go (as required by the work-bench's go.mod), Trivy and SlimToolkit installed. Image builds, Slim and tests execute application code; use an isolated runner, not a production Docker host.
 
 ## Windows / Ubuntu WSL toolchain
