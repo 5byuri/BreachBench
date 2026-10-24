@@ -1,0 +1,53 @@
+{
+  "verified_date": "2026-10-24",
+  "application": "The British Bank (fictional local sandbox)",
+  "mode": "argon",
+  "model": "gemini-4-argon",
+  "completed": true,
+  "source_image": "local/react2shell:british-bank-demo",
+  "hardened_image": "local/react2shell:british-bank-hardened-20261024",
+  "before_url": "http://127.0.0.1:3000",
+  "after_url": "http://127.0.0.1:3001",
+  "before_container": "breachbench-bank-before",
+  "after_container": "breachbench-bank-after-app-1",
+  "banking_model_tests": { "passed": 6, "failed": 0 },
+  "go_test_race_all": "passed",
+  "go_vet_all": "passed",
+  "docker_production_build": "passed",
+  "browser_checks": {
+    "before": {
+      "initial_current_balance": "£12,480.50",
+      "preview_amount": "£25.00",
+      "preview_payee": "Alex Morgan (fictional)",
+      "result_balance": "£12,455.50",
+      "invalid_negative_amount_rejected": true,
+      "reset_returns_starting_balance": true,
+      "uid": 0
+    },
+    "after": {
+      "preview_amount": "£25.00",
+      "preview_payee": "Alex Morgan (fictional)",
+      "result_balance": "£12,455.50",
+      "preview_visible_in_activity": true,
+      "uid": 65532
+    }
+  },
+  "runtime_inspection": {
+    "before_network": "none",
+    "after_network": "none",
+    "docker_published_ports": [],
+    "after_read_only_rootfs": true,
+    "after_cap_drop": ["ALL"],
+    "after_security_opt": ["no-new-privileges:true"]
+  },
+  "limitations": [
+    "Fictional funds and recipients; no login, banking connection, real payment or persistent ledger.",
+    "A transfer is a one-shot URL preview; repeated submissions do not accumulate transactions.",
+    "Intentionally vulnerable Next.js 15.1.0 and React 19.0.0 remain unchanged.",
+    "No React2Shell exploit or egress reachability test was performed.",
+    "Shell results cover listed commands only; hardening does not prevent all runtime code execution.",
+    "Runtime controls require the generated compose.json, not the image tag alone.",
+    "Localhost access is provided by the fixture-specific fixed Docker exec relay.",
+    "The live-session URLs stop working when the local containers or forwarders stop."
+  ]
+}

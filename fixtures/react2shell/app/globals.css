@@ -1,0 +1,165 @@
+:root {
+  color-scheme: light;
+  --paper: #f6f5f1; --white: #ffffff; --navy: #142b3c; --navy-deep: #102230;
+  --ink: #192d3b; --muted: #626c70; --line: #dddfda; --red: #9a382e; --green: #27664f;
+  --serif: Georgia, "Times New Roman", serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; line-height: 1.5; }
+h1, h2, p, dl, dd { margin: 0; }
+h1, h2 { font-family: var(--serif); font-weight: 400; line-height: 1.15; }
+a { color: inherit; text-underline-offset: 4px; }
+a:hover { text-decoration-thickness: 2px; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #b25536; outline-offset: 4px; }
+input, select, button { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+.bank-shell { display: grid; grid-template-columns: 236px minmax(0, 1fr); min-height: 100vh; }
+.sidebar { position: sticky; top: 0; display: flex; flex-direction: column; height: 100vh; padding: 40px 24px 24px; background: var(--navy-deep); color: #edf1ed; }
+.bank-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 62px; text-decoration: none; font-family: var(--serif); font-size: 25px; line-height: 1.05; letter-spacing: -0.7px; }
+.brand-mark { display: grid; place-items: center; width: 44px; height: 51px; flex-shrink: 0; border: 1px solid #89999e; font-size: 35px; }
+.brand-caption { display: block; margin-top: 10px; color: #b9c4c7; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 10px; line-height: 1.5; letter-spacing: 0.25px; }
+.nav-label { margin: 0 12px 14px; color: #b9c4c7; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; }
+nav { display: grid; gap: 6px; }
+nav a { display: flex; align-items: center; gap: 16px; min-height: 48px; padding: 12px; border-left: 2px solid transparent; text-decoration: none; font-size: 13px; }
+nav a span { color: #a8b7bd; font-size: 10px; font-variant-numeric: tabular-nums; }
+nav a:hover, nav a:focus-visible { background: #203746; }
+nav .nav-overview { border-left-color: #c8d1c9; background: #203746; }
+.sidebar-bottom { display: flex; align-items: center; gap: 11px; margin-top: auto; padding-top: 24px; border-top: 1px solid #344752; }
+.customer-avatar { display: grid; place-items: center; width: 36px; height: 36px; background: #314653; border-radius: 50%; font-size: 11px; }
+.sidebar-bottom strong, .sidebar-bottom div span { display: block; }
+.sidebar-bottom strong { font-size: 12px; font-weight: 500; }
+.sidebar-bottom div span { margin-top: 2px; color: #b9c4c7; font-size: 11px; }
+.main-content { width: min(1280px, 100%); margin: 0 auto; padding: 39px 48px 26px; }
+.page-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 27px; }
+.eyebrow { color: var(--muted); font-size: 10px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; }
+h1 { margin-top: 9px; font-size: clamp(30px, 3vw, 40px); letter-spacing: -1.1px; }
+.demo-label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 11px; white-space: nowrap; }
+.demo-label span { width: 6px; height: 6px; border-radius: 50%; background: var(--red); }
+.safety-note { display: flex; align-items: flex-start; gap: 13px; padding: 15px 18px; border: 1px solid #d6b9a9; background: #f4eae2; color: #713d2d; }
+.warning-mark { display: grid; place-items: center; flex-shrink: 0; width: 19px; height: 19px; margin-top: 1px; border: 1px solid #93563c; border-radius: 50%; font-size: 12px; font-weight: 600; }
+.safety-note strong { font-size: 13px; font-weight: 650; }
+.safety-note p { margin-top: 2px; font-size: 12px; line-height: 1.6; }
+.overview-section { margin: 29px 0 27px; }
+.section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 15px; }
+.section-heading h2 { font-size: 23px; letter-spacing: -0.4px; }
+.section-heading > span { color: var(--muted); font-size: 11px; }
+.account-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 20px; }
+.account-card { min-width: 0; padding: 23px 25px; border: 1px solid var(--line); }
+.current-account { background: var(--navy); border-color: var(--navy); color: #f7f7ef; }
+.savings-account { background: #eeeee7; }
+.account-topline, .account-bottomline { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+.account-topline > span:first-child { font-size: 13px; }
+.account-symbol { display: grid; place-items: center; width: 26px; height: 26px; border: 1px solid currentColor; border-radius: 50%; opacity: 0.65; font-family: var(--serif); font-size: 17px; }
+.balance { margin: 18px 0 23px; font-family: var(--serif); font-size: clamp(31px, 3.5vw, 43px); line-height: 1.1; letter-spacing: -1.6px; font-variant-numeric: tabular-nums; }
+.account-bottomline { padding-top: 14px; border-top: 1px solid #b9c2c342; font-size: 11px; }
+.account-bottomline > span:first-child { opacity: 0.85; }
+.account-bottomline a { display: inline-flex; align-items: center; gap: 10px; min-height: 32px; white-space: nowrap; text-decoration: none; }
+.account-bottomline a:hover { text-decoration: underline; }
+.savings-account .account-bottomline { border-top-color: #d4d7d0; }
+.savings-caption { font-family: var(--serif); font-style: italic; }
+.content-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(300px, 1fr); gap: 22px; align-items: start; }
+.panel { min-width: 0; border: 1px solid var(--line); background: var(--white); }
+.panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 24px 25px 20px; }
+.panel-heading h2 { margin-top: 7px; font-size: 25px; letter-spacing: -0.5px; }
+.small-note { color: var(--muted); font-size: 11px; }
+.transaction-labels { display: flex; justify-content: space-between; margin: 0 25px; padding: 10px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); color: var(--muted); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+.transaction-list { margin: 0; padding: 0 25px; list-style: none; }
+.transaction { display: flex; align-items: center; gap: 12px; padding: 17px 0; border-bottom: 1px solid #eeefeb; }
+.transaction-icon { display: grid; place-items: center; flex-shrink: 0; width: 35px; height: 35px; border: 1px solid #e1e4de; border-radius: 50%; background: #f6f6f2; color: #59655e; font-family: var(--serif); font-size: 11px; }
+.transaction-description { min-width: 0; }
+.transaction-description strong, .transaction-value strong { display: block; font-size: 13px; font-weight: 550; }
+.transaction-description span, .transaction-value span { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+.transaction-value { flex-shrink: 0; margin-left: auto; text-align: right; font-variant-numeric: tabular-nums; }
+.transaction-value .incoming { color: var(--green); }
+.preview-transaction .transaction-icon { color: var(--green); background: #edf3ee; }
+.activity-footnote { padding: 15px 25px 19px; color: var(--muted); font-size: 11px; }
+.transfer-arrow { color: var(--red); font-family: var(--serif); font-size: 28px; }
+.transfer-panel { padding-bottom: 21px; }
+.transfer-panel .panel-heading { padding-bottom: 12px; }
+.panel-copy { margin: 0 25px 21px; color: var(--muted); font-size: 12px; line-height: 1.7; }
+form { margin: 0 25px; }
+.form-field { margin-bottom: 17px; }
+label { display: block; margin-bottom: 7px; font-size: 12px; font-weight: 600; }
+input, select { width: 100%; min-width: 0; min-height: 48px; padding: 11px 13px; border: 1px solid #aab2ad; border-radius: 0; background: #fff; color: var(--ink); }
+select { cursor: pointer; }
+.amount-input { position: relative; }
+.amount-input > span { position: absolute; top: 12px; left: 14px; color: var(--muted); font-size: 15px; }
+.amount-input input { padding-left: 31px; font-variant-numeric: tabular-nums; }
+.field-hint { margin-top: 6px; color: var(--muted); font-size: 11px; }
+button { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; min-height: 48px; margin-top: 5px; padding: 12px 16px; border: 1px solid var(--navy); background: var(--navy); color: #fff; font-size: 13px; font-weight: 550; cursor: pointer; }
+button:hover { background: #284757; }
+button span { font-size: 18px; }
+.transfer-error { margin: 0 0 15px; padding: 10px 12px; border-left: 2px solid var(--red); background: #f9eee9; color: #7c2d25; font-size: 12px; }
+.transfer-result { margin: 18px 25px 0; padding: 12px 13px; border-left: 2px solid var(--green); background: #eff5ef; color: #22533f; font-size: 12px; }
+.transfer-result strong { font-size: 13px; }
+.transfer-result p { margin-top: 5px; }
+.transfer-note { margin: 18px 25px 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
+.transfer-note a { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; margin-top: 4px; color: var(--ink); }
+.environment-panel { display: grid; grid-template-columns: 1fr 1.3fr; gap: 32px; margin-top: 27px; padding: 24px 25px; border: 1px solid var(--line); }
+.environment-intro h2 { margin-top: 7px; font-size: 23px; letter-spacing: -0.4px; }
+.environment-intro > p:not(.eyebrow) { margin-top: 9px; color: var(--muted); font-size: 11px; }
+.environment-intro a { display: inline-flex; align-items: center; gap: 8px; min-height: 35px; font-size: 11px; }
+.runtime-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; align-content: center; }
+.runtime-facts dt { color: var(--muted); font-size: 11px; }
+.runtime-facts dd { margin-top: 5px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; overflow-wrap: anywhere; }
+.page-footer { display: flex; justify-content: space-between; gap: 24px; margin-top: 24px; padding-bottom: 2px; color: var(--muted); font-size: 11px; line-height: 1.7; }
+.page-footer p { max-width: 500px; }
+.page-footer p:last-child { text-align: right; }
+.skip-link { position: fixed; top: 12px; left: 16px; z-index: 5; padding: 12px 16px; background: var(--white); color: var(--navy); transform: translateY(-180%); }
+.skip-link:focus { transform: none; }
+
+@media (max-width: 1100px) {
+  .bank-shell { grid-template-columns: 208px minmax(0, 1fr); }
+  .sidebar { padding-left: 20px; padding-right: 20px; }
+  .bank-brand { font-size: 23px; }
+  .main-content { padding: 32px 28px 24px; }
+  .content-grid { gap: 18px; grid-template-columns: minmax(0, 1.2fr) minmax(270px, 1fr); }
+  .account-card { padding: 20px; }
+  .account-bottomline { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .account-bottomline a, .savings-caption { display: inline-flex; align-items: center; min-height: 30px; }
+  .panel-heading { padding-left: 20px; padding-right: 20px; }
+  .transaction-labels { margin-left: 20px; margin-right: 20px; }
+  .transaction-list { padding-left: 20px; padding-right: 20px; }
+  .panel-copy, form, .transfer-result, .transfer-note { margin-left: 20px; margin-right: 20px; }
+  .activity-footnote { padding-left: 20px; padding-right: 20px; }
+}
+@media (max-width: 900px) {
+  .bank-shell { display: block; }
+  .sidebar { position: static; height: auto; padding: 21px 28px 0; }
+  .bank-brand { max-width: 280px; margin-bottom: 20px; font-size: 23px; }
+  .brand-mark { width: 35px; height: 40px; font-size: 28px; }
+  .brand-caption { margin-top: 4px; }
+  .nav-label, .sidebar-bottom { display: none; }
+  nav { grid-template-columns: repeat(4, max-content); gap: 24px; }
+  nav a { min-height: 48px; padding: 10px 0; border-left: 0; border-bottom: 2px solid transparent; font-size: 12px; }
+  nav a span { display: none; }
+  nav .nav-overview { border-bottom-color: #c8d1c9; background: transparent; }
+  nav a:hover, nav a:focus-visible { background: transparent; }
+  .main-content { padding-top: 28px; }
+}
+@media (max-width: 660px) {
+  .sidebar { padding-left: 20px; padding-right: 20px; }
+  .main-content { padding: 25px 20px 21px; }
+  .page-header { align-items: flex-start; gap: 12px; margin-bottom: 21px; }
+  .page-header .eyebrow { max-width: 180px; font-size: 10px; }
+  h1 { font-size: 31px; }
+  .demo-label { margin-top: 5px; font-size: 11px; }
+  .safety-note { padding: 13px; gap: 10px; }
+  .account-grid { gap: 13px; grid-template-columns: 1fr; }
+  .account-card { padding: 21px; }
+  .balance { margin: 17px 0 21px; font-size: 41px; }
+  .account-bottomline { align-items: center; flex-direction: row; gap: 12px; }
+  .content-grid { grid-template-columns: 1fr; gap: 20px; }
+  .section-heading h2 { font-size: 23px; }
+  .section-heading > span { font-size: 10px; }
+  .panel-heading { padding-top: 22px; }
+  .transaction { padding-top: 16px; padding-bottom: 16px; }
+  .environment-panel { grid-template-columns: 1fr; gap: 22px; padding: 22px 20px; }
+  .runtime-facts { gap: 20px 16px; }
+  .page-footer { flex-direction: column; gap: 9px; }
+  .page-footer p:last-child { text-align: left; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}

@@ -1,0 +1,29 @@
+{
+  "model": "gemini-4-argon",
+  "source": "hardening-tool-demo:90465-1792851254304765000-baseline",
+  "image": "hardening-tool-demo:argon-live-3",
+  "artifacts": "/private/tmp/container-hardening-tools-NncFM7/demo-live-3",
+  "completed": false,
+  "error": "Gemini tool request failed (HTTP 429); check model access, quota and request compatibility",
+  "source_facts": {
+    "id": "sha256:98d12e87e2cd61b8f32fce6ce550ec1fad9fdf9fa7883a556c89fc12abee8b92",
+    "architecture": "arm64",
+    "os": "linux",
+    "size_bytes": 83025739,
+    "user": "",
+    "working_directory": "/app",
+    "entrypoint_arguments": 1,
+    "command_arguments": 1,
+    "onbuild_triggers": 0,
+    "exposed_ports": null,
+    "declared_volumes": null
+  },
+  "calls": null,
+  "limitations": [
+    "MVP scope: one offline finite Node workload, not arbitrary services or Compose stacks; no application code or dependency upgrades",
+    "Ten seconds of observed execution is not complete dependency coverage; rare paths need representative tests and explicit retention",
+    "Shell removal does not prevent runtime code execution or memory leaks; this is containment, not a vulnerability fix",
+    "Runtime controls require the generated compose.json; the image alone cannot enforce read-only filesystems or egress policy",
+    "Slim profiling uses its own trusted sensor with monitoring privileges; final containers use Docker's default seccomp profile, not an untested generated profile"
+  ]
+}

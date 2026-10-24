@@ -1,0 +1,9 @@
+{
+  "mode": "http",
+  "port": 3000,
+  "startup_timeout_seconds": 60,
+  "http_checks": [
+    { "path": "/", "status": 200, "body_contains": "The British Bank" },
+    { "path": "/api/health", "status": 200, "body_contains": "healthy" }
+  ]
+}

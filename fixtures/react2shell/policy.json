@@ -1,0 +1,5 @@
+{
+  "user": "65532:65532",
+  "network": "none",
+  "writable_paths": ["/app/.next/cache"]
+}

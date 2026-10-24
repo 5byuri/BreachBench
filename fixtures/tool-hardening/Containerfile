@@ -1,0 +1,6 @@
+ARG BASE_IMAGE=node:24-trixie-slim
+FROM ${BASE_IMAGE}
+WORKDIR /app
+COPY --chmod=0444 app.js /app/app.js
+ENTRYPOINT ["node"]
+CMD ["/app/app.js"]

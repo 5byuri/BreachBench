@@ -1,0 +1,23 @@
+{
+  "services": {
+    "app": {
+      "cap_drop": [
+        "ALL"
+      ],
+      "cpus": 1,
+      "image": "hardening-tool-demo:97124-1792852491650955000-hardened",
+      "mem_limit": "512m",
+      "network_mode": "none",
+      "pids_limit": 128,
+      "pull_policy": "never",
+      "read_only": true,
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "tmpfs": [
+        "/tmp:rw,noexec,nosuid,nodev,size=64m"
+      ],
+      "user": "65532:65532"
+    }
+  }
+}

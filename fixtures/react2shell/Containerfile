@@ -1,0 +1,21 @@
+# INTENTIONALLY VULNERABLE LOCAL FIXTURE. Never expose this image publicly.
+# The official trixie Node image is based on Debian 13.
+FROM node:24-trixie-slim AS build
+ENV NEXT_TELEMETRY_DISABLED=1
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY next.config.mjs ./
+COPY app ./app
+RUN npm run build
+
+FROM node:24-trixie-slim
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
+WORKDIR /app
+COPY --from=build /app/package.json /app/package-lock.json ./
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/.next ./.next
+COPY --from=build /app/next.config.mjs ./
+EXPOSE 3000
+ENTRYPOINT ["node", "node_modules/next/dist/bin/next"]
+CMD ["start", "--hostname", "0.0.0.0", "--port", "3000"]

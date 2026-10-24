@@ -1,0 +1,362 @@
+{
+  "mode": "tools",
+  "source": "debian:trixie-slim",
+  "image": "local/debian-hardened:generic-1",
+  "completed": true,
+  "source_facts": {
+    "id": "sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad",
+    "architecture": "arm64",
+    "os": "linux",
+    "size_bytes": 30210958,
+    "user": "",
+    "working_directory": "",
+    "entrypoint_arguments": 0,
+    "command_arguments": 1,
+    "onbuild_triggers": 0,
+    "exposed_ports": null,
+    "declared_volumes": null
+  },
+  "runtime_policy": {
+    "user": "65532:65532",
+    "network": "none"
+  },
+  "baseline_workload": {
+    "mode": "batch",
+    "status": "passed",
+    "image_id": "sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad",
+    "coverage": "Caller-supplied finite command exited successfully; it replaces the image entrypoint and is not proof that the original service starts",
+    "command_override": true,
+    "exit_code": 0
+  },
+  "candidate_workload": {
+    "mode": "batch",
+    "status": "passed",
+    "image_id": "sha256:9bf3c31a11cc5bed0a788d676249549e420aa1fdf92a29313454517b9ee898f0",
+    "coverage": "Caller-supplied finite command exited successfully; it replaces the image entrypoint and is not proof that the original service starts",
+    "command_override": true,
+    "exit_code": 0
+  },
+  "baseline_probe": {
+    "version": "generic-containment-v1",
+    "nonce": "8a8a73c5abac66e84a126ea6d17c7943",
+    "uid": 0,
+    "gid": 0,
+    "protected_writes": [
+      {
+        "path": "/",
+        "status": "allowed"
+      },
+      {
+        "path": "/usr",
+        "status": "allowed"
+      },
+      {
+        "path": "/etc",
+        "status": "allowed"
+      }
+    ],
+    "local_tool_install": {
+      "status": "allowed",
+      "stage": "execute_marker"
+    },
+    "shells": [
+      {
+        "command": [
+          "/bin/sh"
+        ],
+        "status": "accessible",
+        "exit_code": 0
+      },
+      {
+        "command": [
+          "/bin/bash"
+        ],
+        "status": "accessible",
+        "exit_code": 0
+      },
+      {
+        "command": [
+          "/bin/ash"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/usr/bin/sh"
+        ],
+        "status": "accessible",
+        "exit_code": 0
+      },
+      {
+        "command": [
+          "/usr/bin/bash"
+        ],
+        "status": "accessible",
+        "exit_code": 0
+      },
+      {
+        "command": [
+          "/usr/bin/ash"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/bin/dash"
+        ],
+        "status": "accessible",
+        "exit_code": 0
+      },
+      {
+        "command": [
+          "/usr/bin/dash"
+        ],
+        "status": "accessible",
+        "exit_code": 0
+      },
+      {
+        "command": [
+          "/bin/zsh"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/usr/bin/zsh"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/busybox",
+          "sh"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/bin/busybox",
+          "sh"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/usr/bin/busybox",
+          "sh"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      }
+    ],
+    "writable_paths": [
+      {
+        "path": "/tmp",
+        "status": "allowed"
+      }
+    ],
+    "egress_tested": false,
+    "scope": "Fixed post-code-execution probes in an instrumented disposable container. Only protected root paths, declared writable directories and listed shell commands are measured. Installing this local helper under a protected root directory is not a package-manager or writable-mount installation test. No network reachability or vulnerability exploitation is tested."
+  },
+  "candidate_probe": {
+    "version": "generic-containment-v1",
+    "nonce": "5f376fb56b882c0d4c770b94996d21c1",
+    "uid": 65532,
+    "gid": 65532,
+    "protected_writes": [
+      {
+        "path": "/",
+        "status": "denied",
+        "error_code": "EROFS"
+      },
+      {
+        "path": "/usr",
+        "status": "denied",
+        "error_code": "EROFS"
+      },
+      {
+        "path": "/etc",
+        "status": "denied",
+        "error_code": "EROFS"
+      }
+    ],
+    "local_tool_install": {
+      "status": "denied",
+      "error_code": "EROFS",
+      "stage": "create_directory"
+    },
+    "shells": [
+      {
+        "command": [
+          "/bin/sh"
+        ],
+        "status": "accessible",
+        "exit_code": 0
+      },
+      {
+        "command": [
+          "/bin/bash"
+        ],
+        "status": "accessible",
+        "exit_code": 0
+      },
+      {
+        "command": [
+          "/bin/ash"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/usr/bin/sh"
+        ],
+        "status": "accessible",
+        "exit_code": 0
+      },
+      {
+        "command": [
+          "/usr/bin/bash"
+        ],
+        "status": "accessible",
+        "exit_code": 0
+      },
+      {
+        "command": [
+          "/usr/bin/ash"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/bin/dash"
+        ],
+        "status": "accessible",
+        "exit_code": 0
+      },
+      {
+        "command": [
+          "/usr/bin/dash"
+        ],
+        "status": "accessible",
+        "exit_code": 0
+      },
+      {
+        "command": [
+          "/bin/zsh"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/usr/bin/zsh"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/busybox",
+          "sh"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/bin/busybox",
+          "sh"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/usr/bin/busybox",
+          "sh"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      }
+    ],
+    "writable_paths": [
+      {
+        "path": "/tmp",
+        "status": "allowed"
+      }
+    ],
+    "egress_tested": false,
+    "scope": "Fixed post-code-execution probes in an instrumented disposable container. Only protected root paths, declared writable directories and listed shell commands are measured. Installing this local helper under a protected root directory is not a package-manager or writable-mount installation test. No network reachability or vulnerability exploitation is tested."
+  },
+  "attempts": [
+    {
+      "selected_tool_paths": [
+        "/usr/bin/apt",
+        "/usr/bin/apt-get",
+        "/usr/bin/dpkg",
+        "/usr/bin/curl",
+        "/usr/bin/wget",
+        "/usr/local/bin/npm",
+        "/usr/local/bin/npx",
+        "/usr/local/bin/corepack",
+        "/usr/local/bin/yarn",
+        "/usr/local/bin/yarnpkg",
+        "/usr/bin/npm",
+        "/usr/bin/npx",
+        "/usr/bin/corepack",
+        "/usr/bin/yarn",
+        "/usr/bin/yarnpkg"
+      ],
+      "filesystem": {
+        "removed_entries": [
+          "/usr/bin/apt",
+          "/usr/bin/apt-get",
+          "/usr/bin/dpkg"
+        ],
+        "retained_entries": 3268,
+        "retained_bytes": 100109570,
+        "rootfs_sha256": "bd88e3d1910cec76cf4fabbffc6aa7c1111ad848209aaad388e2ca4ee894f83a",
+        "application_files_modified": false,
+        "method": "Docker export, streaming TAR entry filtering, original runtime config preserved, Docker image load; no application code or component upgrades"
+      },
+      "workload": {
+        "mode": "batch",
+        "status": "passed",
+        "image_id": "sha256:9bf3c31a11cc5bed0a788d676249549e420aa1fdf92a29313454517b9ee898f0",
+        "coverage": "Caller-supplied finite command exited successfully; it replaces the image entrypoint and is not proof that the original service starts",
+        "command_override": true,
+        "exit_code": 0
+      }
+    }
+  ],
+  "limitations": [
+    "Linux images and caller-declared workload coverage; an arbitrary image cannot prove all application requirements from a smoke test",
+    "No app code, retained file bytes or dependency/runtime versions are upgraded; this is hardening, not a CVE or RCE fix",
+    "Only the fixed removable shell/package/download tool entrypoints are considered; this is not complete unused-package discovery",
+    "Necessary tools are retained when declarations or checks require them; shell absence does not prevent runtime code execution",
+    "Read-only, capabilities, tmpfs and network settings require the generated compose.json; image alone cannot enforce deployment controls",
+    "No external target or exploit is used. In-memory access and application responses remain possible after compromise"
+  ]
+}

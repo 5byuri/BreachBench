@@ -1,0 +1,77 @@
+package main
+
+import (
+ "bytes"
+ "encoding/binary"
+ "encoding/json"
+ "flag"
+ "fmt"
+ "io"
+ "net"
+ "net/http"
+ "os"
+ "runtime"
+ "strings"
+ "syscall"
+ "time"
+)
+
+func main() {
+ port:=flag.Int("port",8080,""); health:=flag.String("http","",""); php:=flag.Bool("php",false,"");flag.Parse()
+ checks:=map[string]bool{};details:=map[string]string{}
+ checks["nonroot"]=os.Getuid()==65532&&os.Getgid()==65532
+ status,err:=os.ReadFile("/proc/self/status");if err!=nil{details["status"]=err.Error()}
+ fields:=map[string]string{}
+ for _,line:=range strings.Split(string(status),"\n"){p:=strings.SplitN(line,":",2);if len(p)==2{fields[p[0]]=strings.TrimSpace(p[1])}}
+ checks["no_new_privileges"]=fields["NoNewPrivs"]=="1"
+ checks["seccomp_active"]=fields["Seccomp"]=="2"
+ checks["capabilities_dropped"]=fields["CapEff"]=="0000000000000000"&&fields["CapBnd"]=="0000000000000000"
+ var stat syscall.Statfs_t
+ checks["root_read_only"]=syscall.Statfs("/",&stat)==nil&&stat.Flags&1!=0
+ interfaces,e:=net.Interfaces();isolated:=e==nil
+ // Linux can expose inactive tunnel devices even in Docker's none network.
+ loopbackUp:=false
+ for _,i:=range interfaces{if i.Flags&net.FlagUp!=0{if i.Flags&net.FlagLoopback==0{isolated=false}else{loopbackUp=true}}}
+ isolated=isolated&&loopbackUp
+ checks["network_isolated"]=isolated
+ details["network_isolated"]=fmt.Sprintf("interfaces=%v error=%v",interfaces,e)
+ // Invalid targets make these checks non-destructive even if filtering is absent.
+ _,_,errno:=syscall.Syscall6(syscall.SYS_PTRACE,2,^uintptr(0),0,0,0,0)
+ checks["ptrace_blocked"]=errno==syscall.EPERM;details["ptrace_blocked"]=errno.Error()
+ // The frozen syscall package omits SYS_BPF on amd64.
+ bpfNumber:=uintptr(321);if runtime.GOARCH=="arm64"{bpfNumber=280}
+ _,_,errno=syscall.Syscall(bpfNumber,^uintptr(0),0,0)
+ checks["bpf_blocked"]=errno==syscall.EPERM;details["bpf_blocked"]=errno.Error()
+ _,_,errno=syscall.Syscall6(syscall.SYS_MOUNT,0,0,0,0,0,0)
+ checks["mount_blocked"]=errno==syscall.EPERM;details["mount_blocked"]=errno.Error()
+ address:=fmt.Sprintf("127.0.0.1:%d",*port)
+ until:=time.Now().Add(30*time.Second)
+ for time.Now().Before(until){
+  var e error
+  if *php{e=fpmPing(address)}else if *health!=""{
+   client:=http.Client{Timeout:2*time.Second,Transport:&http.Transport{Proxy:nil},CheckRedirect:func(*http.Request,[]*http.Request)error{return http.ErrUseLastResponse}}
+   var response *http.Response
+   response,e=client.Get("http://"+address+*health)
+   if e==nil{_,_=io.Copy(io.Discard,io.LimitReader(response.Body,1<<20));response.Body.Close();if response.StatusCode<200||response.StatusCode>=300{e=fmt.Errorf("HTTP %d",response.StatusCode)}}
+  }else{var connection net.Conn;connection,e=net.DialTimeout("tcp",address,time.Second);if e==nil{connection.Close()}}
+  if e==nil{checks["application_ready"]=true;break};details["application_ready"]=e.Error();time.Sleep(250*time.Millisecond)
+ }
+ if checks["application_ready"]{details["application_ready"]="TCP readiness only";if *health!=""{details["application_ready"]="HTTP health endpoint returned 2xx"};if *php{details["application_ready"]="FastCGI FPM ping returned pong"}}
+ _=json.NewEncoder(os.Stdout).Encode(map[string]any{"checks":checks,"details":details})
+}
+
+func fpmPing(address string)error{
+ c,err:=net.DialTimeout("tcp",address,time.Second);if err!=nil{return err};defer c.Close();c.SetDeadline(time.Now().Add(2*time.Second))
+ send:=func(kind byte,data []byte)error{header:=[]byte{1,kind,0,1,byte(len(data)>>8),byte(len(data)),0,0};_,e:=io.Copy(c,bytes.NewReader(append(header,data...)));return e}
+ if err=send(1,[]byte{0,1,0,0,0,0,0,0});err!=nil{return err}
+ var params []byte
+ for _,pair:=range [][2]string{{"REQUEST_METHOD","GET"},{"SCRIPT_NAME","/ping"},{"SCRIPT_FILENAME","/ping"},{"REQUEST_URI","/ping"},{"SERVER_PROTOCOL","HTTP/1.1"},{"QUERY_STRING",""}}{params=append(params,byte(len(pair[0])),byte(len(pair[1])));params=append(params,pair[0]...);params=append(params,pair[1]...)}
+ if err=send(4,params);err!=nil{return err};if err=send(4,nil);err!=nil{return err};if err=send(5,nil);err!=nil{return err}
+ var output bytes.Buffer
+ for output.Len()<65536{
+  h:=make([]byte,8);if _,err=io.ReadFull(c,h);err!=nil{return err}
+  n:=int(binary.BigEndian.Uint16(h[4:6]));body:=make([]byte,n+int(h[6]));if _,err=io.ReadFull(c,body);err!=nil{return err}
+  if h[1]==6{output.Write(body[:n])};if h[1]==3{if strings.HasSuffix(strings.TrimSpace(output.String()),"pong"){return nil};return fmt.Errorf("FPM ping did not return pong")}
+ }
+ return fmt.Errorf("FPM response too large")
+}

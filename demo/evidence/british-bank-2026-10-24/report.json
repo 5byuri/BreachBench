@@ -1,0 +1,437 @@
+{
+  "mode": "argon",
+  "source": "local/react2shell:british-bank-demo",
+  "image": "local/react2shell:british-bank-hardened-20261024",
+  "completed": true,
+  "source_facts": {
+    "id": "sha256:0951f5de3842e5db6cbff15463e825383ff243b770a9d7c54d16951816aba8f0",
+    "architecture": "arm64",
+    "os": "linux",
+    "size_bytes": 167177513,
+    "user": "",
+    "working_directory": "/app",
+    "entrypoint_arguments": 2,
+    "command_arguments": 5,
+    "onbuild_triggers": 0,
+    "exposed_ports": {
+      "3000/tcp": {}
+    },
+    "declared_volumes": null
+  },
+  "runtime_policy": {
+    "user": "65532:65532",
+    "writable_paths": [
+      "/app/.next/cache"
+    ],
+    "network": "none"
+  },
+  "baseline_workload": {
+    "mode": "http",
+    "status": "passed",
+    "image_id": "sha256:0951f5de3842e5db6cbff15463e825383ff243b770a9d7c54d16951816aba8f0",
+    "coverage": "Original image ENTRYPOINT/CMD served caller-declared loopback HTTP checks from a read-only temporary probe; the checker uses no host ports, redirects, proxies, or external targets and does not inventory the application's own dependency connections",
+    "command_override": false,
+    "http": [
+      {
+        "path": "/",
+        "status": 200,
+        "body_sha256": "f6d9dbdcce0142a75104b118cd7a0beb16f932a79baa07082692daccd03862a7",
+        "passed": true
+      },
+      {
+        "path": "/api/health",
+        "status": 200,
+        "body_sha256": "1f6d36625d8af0ee4f15178eb0b16da3f2e976f474e90bba3537e0f38cbc5f0b",
+        "passed": true
+      }
+    ]
+  },
+  "candidate_workload": {
+    "mode": "http",
+    "status": "passed",
+    "image_id": "sha256:f6fde2677461e2e059c9335a80365e647df40c9534fa8d35885f2258445f74c9",
+    "coverage": "Original image ENTRYPOINT/CMD served caller-declared loopback HTTP checks from a read-only temporary probe; the checker uses no host ports, redirects, proxies, or external targets and does not inventory the application's own dependency connections",
+    "command_override": false,
+    "http": [
+      {
+        "path": "/",
+        "status": 200,
+        "body_sha256": "92a5de432b4bd28d6b54c0df1535d97d9a9414ce3be8163b55e196769e079836",
+        "passed": true
+      },
+      {
+        "path": "/api/health",
+        "status": 200,
+        "body_sha256": "1f6d36625d8af0ee4f15178eb0b16da3f2e976f474e90bba3537e0f38cbc5f0b",
+        "passed": true
+      }
+    ]
+  },
+  "baseline_probe": {
+    "version": "generic-containment-v1",
+    "nonce": "9de76ffcd2c54f5b198957bc007a0e7e",
+    "uid": 0,
+    "gid": 0,
+    "protected_writes": [
+      {
+        "path": "/",
+        "status": "allowed"
+      },
+      {
+        "path": "/usr",
+        "status": "allowed"
+      },
+      {
+        "path": "/etc",
+        "status": "allowed"
+      }
+    ],
+    "local_tool_install": {
+      "status": "allowed",
+      "stage": "execute_marker"
+    },
+    "shells": [
+      {
+        "command": [
+          "/bin/sh"
+        ],
+        "status": "accessible",
+        "exit_code": 0
+      },
+      {
+        "command": [
+          "/bin/bash"
+        ],
+        "status": "accessible",
+        "exit_code": 0
+      },
+      {
+        "command": [
+          "/bin/ash"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/usr/bin/sh"
+        ],
+        "status": "accessible",
+        "exit_code": 0
+      },
+      {
+        "command": [
+          "/usr/bin/bash"
+        ],
+        "status": "accessible",
+        "exit_code": 0
+      },
+      {
+        "command": [
+          "/usr/bin/ash"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/bin/dash"
+        ],
+        "status": "accessible",
+        "exit_code": 0
+      },
+      {
+        "command": [
+          "/usr/bin/dash"
+        ],
+        "status": "accessible",
+        "exit_code": 0
+      },
+      {
+        "command": [
+          "/bin/zsh"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/usr/bin/zsh"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/busybox",
+          "sh"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/bin/busybox",
+          "sh"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/usr/bin/busybox",
+          "sh"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      }
+    ],
+    "writable_paths": [
+      {
+        "path": "/tmp",
+        "status": "allowed"
+      }
+    ],
+    "egress_tested": false,
+    "scope": "Fixed post-code-execution probes in an instrumented disposable container. Only protected root paths, declared writable directories and listed shell commands are measured. Installing this local helper under a protected root directory is not a package-manager or writable-mount installation test. No network reachability or vulnerability exploitation is tested."
+  },
+  "candidate_probe": {
+    "version": "generic-containment-v1",
+    "nonce": "e9ab8069efaee732009e3ab1276480ad",
+    "uid": 65532,
+    "gid": 65532,
+    "protected_writes": [
+      {
+        "path": "/",
+        "status": "denied",
+        "error_code": "EROFS"
+      },
+      {
+        "path": "/usr",
+        "status": "denied",
+        "error_code": "EROFS"
+      },
+      {
+        "path": "/etc",
+        "status": "denied",
+        "error_code": "EROFS"
+      }
+    ],
+    "local_tool_install": {
+      "status": "denied",
+      "error_code": "EROFS",
+      "stage": "create_directory"
+    },
+    "shells": [
+      {
+        "command": [
+          "/bin/sh"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/bin/bash"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/bin/ash"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/usr/bin/sh"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/usr/bin/bash"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/usr/bin/ash"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/bin/dash"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/usr/bin/dash"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/bin/zsh"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/usr/bin/zsh"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/busybox",
+          "sh"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/bin/busybox",
+          "sh"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      },
+      {
+        "command": [
+          "/usr/bin/busybox",
+          "sh"
+        ],
+        "status": "unavailable",
+        "exit_code": -1,
+        "error_code": "ENOENT"
+      }
+    ],
+    "writable_paths": [
+      {
+        "path": "/tmp",
+        "status": "allowed"
+      },
+      {
+        "path": "/app/.next/cache",
+        "status": "allowed"
+      }
+    ],
+    "egress_tested": false,
+    "scope": "Fixed post-code-execution probes in an instrumented disposable container. Only protected root paths, declared writable directories and listed shell commands are measured. Installing this local helper under a protected root directory is not a package-manager or writable-mount installation test. No network reachability or vulnerability exploitation is tested."
+  },
+  "attempts": [
+    {
+      "selected_tool_paths": [
+        "/bin/sh",
+        "/bin/bash",
+        "/bin/ash",
+        "/bin/dash",
+        "/bin/zsh",
+        "/bin/busybox",
+        "/busybox",
+        "/usr/bin/sh",
+        "/usr/bin/bash",
+        "/usr/bin/ash",
+        "/usr/bin/dash",
+        "/usr/bin/zsh",
+        "/usr/bin/busybox",
+        "/usr/bin/apt",
+        "/usr/bin/apt-get",
+        "/usr/bin/dpkg",
+        "/usr/bin/curl",
+        "/usr/bin/wget",
+        "/usr/local/bin/npm",
+        "/usr/local/bin/npx",
+        "/usr/local/bin/corepack",
+        "/usr/local/bin/yarn",
+        "/usr/local/bin/yarnpkg",
+        "/usr/bin/npm",
+        "/usr/bin/npx",
+        "/usr/bin/corepack",
+        "/usr/bin/yarn",
+        "/usr/bin/yarnpkg"
+      ],
+      "filesystem": {
+        "removed_entries": [
+          "/usr/bin/apt",
+          "/usr/bin/apt-get",
+          "/usr/bin/bash",
+          "/usr/bin/dash",
+          "/usr/bin/dpkg",
+          "/usr/bin/sh",
+          "/usr/local/bin/corepack",
+          "/usr/local/bin/npm",
+          "/usr/local/bin/npx",
+          "/usr/local/bin/yarn",
+          "/usr/local/bin/yarnpkg"
+        ],
+        "retained_entries": 15677,
+        "retained_bytes": 562997470,
+        "rootfs_sha256": "ef25976cc6fb505df6e9fee7afa82d5d3615790f69fb75a5a326a4dcf42a0e85",
+        "application_files_modified": false,
+        "method": "Docker export, streaming TAR entry filtering, original runtime config preserved, Docker image load; no application code or component upgrades"
+      },
+      "workload": {
+        "mode": "http",
+        "status": "passed",
+        "image_id": "sha256:f6fde2677461e2e059c9335a80365e647df40c9534fa8d35885f2258445f74c9",
+        "coverage": "Original image ENTRYPOINT/CMD served caller-declared loopback HTTP checks from a read-only temporary probe; the checker uses no host ports, redirects, proxies, or external targets and does not inventory the application's own dependency connections",
+        "command_override": false,
+        "http": [
+          {
+            "path": "/",
+            "status": 200,
+            "body_sha256": "92a5de432b4bd28d6b54c0df1535d97d9a9414ce3be8163b55e196769e079836",
+            "passed": true
+          },
+          {
+            "path": "/api/health",
+            "status": 200,
+            "body_sha256": "1f6d36625d8af0ee4f15178eb0b16da3f2e976f474e90bba3537e0f38cbc5f0b",
+            "passed": true
+          }
+        ]
+      }
+    }
+  ],
+  "limitations": [
+    "Linux images and caller-declared workload coverage; an arbitrary image cannot prove all application requirements from a smoke test",
+    "No app code, retained file bytes or dependency/runtime versions are upgraded; this is hardening, not a CVE or RCE fix",
+    "Only the fixed removable shell/package/download tool entrypoints are considered; this is not complete unused-package discovery",
+    "Necessary tools are retained when declarations or checks require them; shell absence does not prevent runtime code execution",
+    "Read-only, capabilities, tmpfs and network settings require the generated compose.json; image alone cannot enforce deployment controls",
+    "No external target or exploit is used. In-memory access and application responses remain possible after compromise"
+  ]
+}

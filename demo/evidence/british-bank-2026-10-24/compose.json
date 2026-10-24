@@ -1,0 +1,27 @@
+{
+  "services": {
+    "app": {
+      "cap_drop": [
+        "ALL"
+      ],
+      "cpus": 1,
+      "expose": [
+        "3000"
+      ],
+      "image": "local/react2shell:british-bank-hardened-20261024",
+      "mem_limit": "512m",
+      "network_mode": "none",
+      "pids_limit": 128,
+      "pull_policy": "never",
+      "read_only": true,
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "tmpfs": [
+        "/tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777",
+        "/app/.next/cache:rw,noexec,nosuid,nodev,size=64m,mode=1777"
+      ],
+      "user": "65532:65532"
+    }
+  }
+}

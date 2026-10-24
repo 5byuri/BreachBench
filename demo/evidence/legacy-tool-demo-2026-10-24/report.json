@@ -1,0 +1,223 @@
+{
+  "mode": "scripted-docker-demo",
+  "model": "none",
+  "source": "hardening-tool-demo:97124-1792852491650955000-baseline",
+  "image": "hardening-tool-demo:97124-1792852491650955000-hardened",
+  "artifacts": "/Users/larshermges/Documents/Codex/2026-08-26/okay/container-demo-2026-10-24",
+  "completed": true,
+  "source_facts": {
+    "id": "sha256:0eac601f44ae9b4838e74dc07b3847746bfc4d972e3344d73f86f25d8cba16a8",
+    "architecture": "arm64",
+    "os": "linux",
+    "size_bytes": 83025739,
+    "user": "",
+    "working_directory": "/app",
+    "entrypoint_arguments": 1,
+    "command_arguments": 1,
+    "onbuild_triggers": 0,
+    "exposed_ports": null,
+    "declared_volumes": null
+  },
+  "candidate_facts": {
+    "id": "sha256:d33e92661e8e62b2f9793a2115660ce7fb6d1cf6aea4d6c87e56d07de392f5fd",
+    "architecture": "arm64",
+    "os": "linux",
+    "size_bytes": 83027011,
+    "user": "65532:65532",
+    "working_directory": "/app",
+    "entrypoint_arguments": 1,
+    "command_arguments": 1,
+    "onbuild_triggers": 0,
+    "exposed_ports": null,
+    "declared_volumes": null
+  },
+  "calls": [
+    {
+      "tool": "inspect_image",
+      "status": "passed"
+    },
+    {
+      "tool": "build_demo_candidate",
+      "status": "passed"
+    },
+    {
+      "tool": "validate_candidate",
+      "status": "passed"
+    }
+  ],
+  "validation": {
+    "scope": "Offline Node workload: original image USER and ENTRYPOINT/CMD baseline versus a candidate with explicit runtime restrictions; no remote exploit",
+    "baseline": {
+      "image": "hardening-agent:97124-1792852493688549000-source",
+      "image_id": "sha256:0eac601f44ae9b4838e74dc07b3847746bfc4d972e3344d73f86f25d8cba16a8",
+      "application": {
+        "status": "passed",
+        "exit_code": 0,
+        "evidence": "original image ENTRYPOINT/CMD exited successfully"
+      },
+      "shells": [
+        {
+          "command": [
+            "/bin/sh"
+          ],
+          "status": "accessible",
+          "exit_code": 0,
+          "evidence": "shell executed the exact random marker"
+        },
+        {
+          "command": [
+            "/bin/bash"
+          ],
+          "status": "accessible",
+          "exit_code": 0,
+          "evidence": "shell executed the exact random marker"
+        },
+        {
+          "command": [
+            "/bin/ash"
+          ],
+          "status": "unavailable",
+          "exit_code": 127,
+          "evidence": "Docker runtime could not execute this shell path"
+        },
+        {
+          "command": [
+            "/usr/bin/sh"
+          ],
+          "status": "accessible",
+          "exit_code": 0,
+          "evidence": "shell executed the exact random marker"
+        },
+        {
+          "command": [
+            "/busybox",
+            "sh"
+          ],
+          "status": "unavailable",
+          "exit_code": 127,
+          "evidence": "Docker runtime could not execute this shell path"
+        },
+        {
+          "command": [
+            "/bin/busybox",
+            "sh"
+          ],
+          "status": "unavailable",
+          "exit_code": 127,
+          "evidence": "Docker runtime could not execute this shell path"
+        }
+      ],
+      "runtime": {
+        "nonce": "d15cf64f98400511e404e0fed865a360",
+        "uid": 0,
+        "runtime_sha256": "c8c5721679d8d1a09e9987e345d5f9a64899bb85f7a384783ba8a93e6e62348a",
+        "application_sha256": "e9fea6229563e440bd08291ace2e8e97b3a55ea15576945fc5b5dd6b934df862",
+        "protected_root_write": {
+          "status": "allowed"
+        },
+        "local_tool_install": {
+          "status": "allowed"
+        }
+      }
+    },
+    "candidate": {
+      "image": "hardening-agent:97124-1792852493688549000-checked-1",
+      "image_id": "sha256:d33e92661e8e62b2f9793a2115660ce7fb6d1cf6aea4d6c87e56d07de392f5fd",
+      "application": {
+        "status": "passed",
+        "exit_code": 0,
+        "evidence": "original image ENTRYPOINT/CMD exited successfully"
+      },
+      "shells": [
+        {
+          "command": [
+            "/bin/sh"
+          ],
+          "status": "unavailable",
+          "exit_code": 127,
+          "evidence": "Docker runtime could not execute this shell path"
+        },
+        {
+          "command": [
+            "/bin/bash"
+          ],
+          "status": "unavailable",
+          "exit_code": 127,
+          "evidence": "Docker runtime could not execute this shell path"
+        },
+        {
+          "command": [
+            "/bin/ash"
+          ],
+          "status": "unavailable",
+          "exit_code": 127,
+          "evidence": "Docker runtime could not execute this shell path"
+        },
+        {
+          "command": [
+            "/usr/bin/sh"
+          ],
+          "status": "unavailable",
+          "exit_code": 127,
+          "evidence": "Docker runtime could not execute this shell path"
+        },
+        {
+          "command": [
+            "/busybox",
+            "sh"
+          ],
+          "status": "unavailable",
+          "exit_code": 127,
+          "evidence": "Docker runtime could not execute this shell path"
+        },
+        {
+          "command": [
+            "/bin/busybox",
+            "sh"
+          ],
+          "status": "unavailable",
+          "exit_code": 127,
+          "evidence": "Docker runtime could not execute this shell path"
+        }
+      ],
+      "runtime": {
+        "nonce": "d15cf64f98400511e404e0fed865a360",
+        "uid": 65532,
+        "runtime_sha256": "c8c5721679d8d1a09e9987e345d5f9a64899bb85f7a384783ba8a93e6e62348a",
+        "application_sha256": "e9fea6229563e440bd08291ace2e8e97b3a55ea15576945fc5b5dd6b934df862",
+        "protected_root_write": {
+          "status": "denied",
+          "error_code": "EROFS"
+        },
+        "local_tool_install": {
+          "status": "denied",
+          "error_code": "EROFS"
+        }
+      }
+    },
+    "passed": true,
+    "improvement_demonstrated": true,
+    "improvements": [
+      "protected_root_write newly denied",
+      "local_tool_install newly denied",
+      "/bin/sh newly unavailable",
+      "/bin/bash newly unavailable",
+      "/usr/bin/sh newly unavailable",
+      "execution changed from root to non-root"
+    ],
+    "limitations": [
+      "Only the unchanged finite application workload and six listed shell paths are tested; workload coverage is declared, not inferred",
+      "Both sides share no network, dropped capabilities, no-new-privileges and resource limits; this does not measure production deployment or network-policy improvements",
+      "Docker daemon default seccomp/LSM settings apply; this comparator does not load or verify generated security profiles",
+      "Denied root writes and local tool installation apply to protected root paths only; writable mounts and language runtimes may still execute code",
+      "Local tool installation creates and executes a benign JavaScript file under /hardening-local-tool-*; package-manager absence is not a passing test",
+      "Hash equality verifies /app/app.js and the executed Node binary, not every application dependency; no upgrades or application fixes are performed by these tests"
+    ]
+  },
+  "limitations": [
+    "MVP scope: one offline finite Node workload, not arbitrary services or Compose stacks; no application code or dependency upgrades",
+    "Shell removal does not prevent runtime code execution or memory leaks; this is containment, not a vulnerability fix",
+    "Runtime controls require the generated compose.json; the image alone cannot enforce read-only filesystems or egress policy",
+    "This demo removes a fixed list of known shell/tool entrypoints using Docker, not automatic Slim dependency profiling. It is specific to the public fixture and does not remove historical image layers or every possible tool."
+  ]
+}
