@@ -1,0 +1,92 @@
+{
+  "mode": "static-argon",
+  "source": "local/graphify:baseline-92741d1",
+  "image": "local/graphify:static-argon-nf5rc9",
+  "candidate_created": true,
+  "application_tested": false,
+  "compatibility": "unverified",
+  "analysis": {
+    "source_id": "sha256:7f8a7ea130d69b18851172f0eb55e772fa8c02467bab19a523c0eedd79d375bc",
+    "architecture": "arm64",
+    "user": "10001:10001",
+    "user_changed": false,
+    "present_tools": [
+      "/usr/bin/sh",
+      "/usr/bin/bash",
+      "/usr/bin/dash",
+      "/usr/bin/apt",
+      "/usr/bin/apt-get",
+      "/usr/bin/dpkg"
+    ],
+    "eligible_removals": [
+      "/usr/bin/sh",
+      "/usr/bin/bash",
+      "/usr/bin/dash",
+      "/usr/bin/apt",
+      "/usr/bin/apt-get",
+      "/usr/bin/dpkg"
+    ],
+    "shell_required": false,
+    "declared_volumes": [],
+    "exposed_ports": [
+      "8080/tcp"
+    ],
+    "unknowns": [
+      "Static inspection does not establish application compatibility or discover dynamic tool, write, credential, or network requirements",
+      "Primary UID:GID is resolved statically; supplementary group membership and runtime access are not verified"
+    ]
+  },
+  "runtime_policy": {
+    "user": "10001:10001",
+    "network": "none"
+  },
+  "selected_tool_paths": [
+    "/usr/bin/sh",
+    "/usr/bin/bash",
+    "/usr/bin/dash",
+    "/usr/bin/apt",
+    "/usr/bin/apt-get",
+    "/usr/bin/dpkg"
+  ],
+  "filesystem": {
+    "removed_entries": [
+      "/usr/bin/apt",
+      "/usr/bin/apt-get",
+      "/usr/bin/bash",
+      "/usr/bin/dash",
+      "/usr/bin/dpkg",
+      "/usr/bin/sh"
+    ],
+    "retained_entries": 12634,
+    "retained_bytes": 384028941,
+    "rootfs_sha256": "affb82c31007d85031a10509506dd00c7f3faa018713f0bfaa9a24d23f688740",
+    "application_files_modified": false,
+    "method": "Docker export, streaming TAR entry filtering, original runtime config preserved, Docker image load; no application code or component upgrades"
+  },
+  "agent": {
+    "tool_calls": [
+      "inspect_image_static",
+      "remove_unneeded_tools",
+      "apply_static_hardening"
+    ],
+    "selected_tools": [
+      "/usr/bin/sh",
+      "/usr/bin/bash",
+      "/usr/bin/dash",
+      "/usr/bin/apt",
+      "/usr/bin/apt-get",
+      "/usr/bin/dpkg"
+    ],
+    "applied": true
+  },
+  "deployment_written": true,
+  "limitations": [
+    "Target application and probes were not started; compatibility, shell access, write denial and network containment were not tested",
+    "Static declarations do not prove runtime/subprocess, writable-path, credential or network requirements; removals are candidates, not proven-unused packages",
+    "Only fixed tool entrypoints can be pruned; libraries, application code and retained runtime/dependency versions are not changed",
+    "Shell absence does not prevent Python, PHP or Node code execution, data access or exploitation of application vulnerabilities",
+    "Runtime controls require compose.json or equivalent deployment configuration; they are not enforced by the image alone",
+    "Default network=none, read-only root, ephemeral /tmp and resource limits are restrictive assumptions, not inferred application requirements",
+    "Original image environment defaults are preserved locally, not sent to the model; embedded credentials are not automatically removed"
+  ]
+}

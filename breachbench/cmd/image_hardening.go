@@ -11,6 +11,7 @@ func newImageHardeningCommands(harden *cobra.Command) {
 	commands := []struct{ name, description string }{
 		{"auto", "Harden an existing image with deterministic tools and declared workload checks"},
 		{"agent", "Let Gemini Argon select bounded image-hardening actions"},
+		{"static", "Inspect and repack an untested hardening candidate without starting the application"},
 		{"gemini", "Generate a candidate Containerfile through the Gemini API"},
 		{"pentest", "Run the legacy local before/after containment checks"},
 		{"tool-demo", "Run the explicitly scoped public tool-hardening fixture"},
@@ -32,7 +33,7 @@ func newImageHardeningCommands(harden *cobra.Command) {
 	}
 	// Native app-bundle build/verify/demo commands keep their existing meanings.
 	// The image namespace exposes the complete former workbench command set.
-	legacyNames := []string{"auto", "agent", "tool-demo", "gemini", "pentest", "demo", "inspect", "scan", "config", "build", "minify", "run", "verify", "compare"}
+	legacyNames := []string{"auto", "agent", "static", "tool-demo", "gemini", "pentest", "demo", "inspect", "scan", "config", "build", "minify", "run", "verify", "compare"}
 	harden.AddCommand(&cobra.Command{
 		Use: "image COMMAND [flags]", Short: "Use the complete image-hardening command set without changing native bundle commands",
 		Long:               "Image-hardening compatibility namespace. Native harden APP, demo, build, and verify remain unchanged.\n\nCommands: " + strings.Join(legacyNames, ", ") + ".\nUse image COMMAND --help for that command's flags.",

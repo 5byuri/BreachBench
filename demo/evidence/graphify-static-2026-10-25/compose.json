@@ -1,0 +1,23 @@
+{
+  "services": {
+    "app": {
+      "cap_drop": [
+        "ALL"
+      ],
+      "cpus": 1,
+      "image": "local/graphify:static-argon-nf5rc9",
+      "mem_limit": "512m",
+      "network_mode": "none",
+      "pids_limit": 128,
+      "pull_policy": "never",
+      "read_only": true,
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "tmpfs": [
+        "/tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777"
+      ],
+      "user": "10001:10001"
+    }
+  }
+}

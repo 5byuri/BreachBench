@@ -25,6 +25,24 @@ Kubernetes/Compose deployment, and the limits of automatic inference.
 
 ## Harden an existing application image
 
+For **static-only** hardening, without starting the application or any probes:
+
+```sh
+go build -o bin/breachbench .
+static_parent=$(mktemp -d /tmp/breachbench-static.XXXXXX)
+./bin/breachbench harden static \
+  --image your-app:original --target your-app:static-candidate \
+  --artifacts "$static_parent/results" --format human
+```
+
+Argon calls bounded inspection, tool-selection and apply tools. Existing Gemini
+Keychain credentials are reused; add `--mode tools` for deterministic operation
+without an API key. No workload JSON is needed. The output is an **untested
+candidate**, not proof that the application still works or an exploit is blocked.
+Read-only/non-root/capability/network controls are supplied in `compose.json`;
+the default denies network access and may break application features. See
+[static-only limits and policy overrides](docs/image-hardening.md#static-only-hardening).
+
 The supplied-image workflow preserves application/runtime versions, removes
 selected unnecessary tool entrypoints, and compares application checks under a
 non-root/read-only runtime. It does not patch vulnerabilities or require Node in

@@ -30,6 +30,8 @@ func TestImageHardeningRoutingPreservesEngineFlagsAndErrors(t *testing.T) {
 	}{
 		{[]string{"harden", "auto"}, "--checks is required"},
 		{[]string{"harden", "agent", "--mode=invalid"}, "invalid mode"},
+		{[]string{"harden", "static", "--mode=invalid"}, "invalid mode"},
+		{[]string{"harden", "image", "static", "--mode=invalid"}, "invalid mode"},
 		{[]string{"harden", "image", "auto"}, "--checks is required"},
 		{[]string{"harden", "image", "verify"}, "--container is required"},
 		{[]string{"harden", "image", "build"}, "target:"},
@@ -50,7 +52,7 @@ func TestImageHardeningHelpAndNativeCommandsRemainAvailable(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, name := range []string{"auto", "agent", "image", "demo", "detect", "build", "verify", "trace", "scrape"} {
+	for _, name := range []string{"auto", "agent", "static", "image", "demo", "detect", "build", "verify", "trace", "scrape"} {
 		if !strings.Contains(output, name) {
 			t.Errorf("harden help lost %s", name)
 		}
@@ -82,7 +84,7 @@ func TestEveryImageCommandAliasUsesPassThroughFlags(t *testing.T) {
 	for _, command := range newHardenCommand().Commands() {
 		commands[command.Name()] = command
 	}
-	for _, name := range []string{"auto", "agent", "gemini", "pentest", "tool-demo", "inspect", "scan", "config", "minify", "run", "compare", "image"} {
+	for _, name := range []string{"auto", "agent", "static", "gemini", "pentest", "tool-demo", "inspect", "scan", "config", "minify", "run", "compare", "image"} {
 		command := commands[name]
 		if command == nil || !command.DisableFlagParsing || command.RunE == nil {
 			t.Errorf("image alias %s is missing or intercepts engine flags", name)

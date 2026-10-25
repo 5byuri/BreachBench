@@ -1,0 +1,15 @@
+{
+  "application_tested": false,
+  "runtime_policy": {
+    "user": "10001:10001",
+    "network": "none"
+  },
+  "selected_tool_paths": [
+    "/usr/bin/sh",
+    "/usr/bin/bash",
+    "/usr/bin/dash",
+    "/usr/bin/apt",
+    "/usr/bin/apt-get",
+    "/usr/bin/dpkg"
+  ]
+}

@@ -25,6 +25,9 @@ func capture(ctx context.Context, name string, args ...string) ([]byte, error) {
 }
 
 func harden(args []string, out io.Writer) error {
+	if len(args) > 0 && args[0] == "static" {
+		return staticCLI(args[1:], out)
+	}
 	if len(args) > 0 && (args[0] == "auto" || args[0] == "agent") {
 		return genericCLI(args, out)
 	}
@@ -35,7 +38,7 @@ func harden(args []string, out io.Writer) error {
 		return agentCLI(args, out)
 	}
 	if len(args) == 0 {
-		return errors.New("usage: harden <auto|agent|tool-demo|gemini|pentest|demo|inspect|scan|config|build|minify|run|verify|compare> [flags]; use harden <command> -h")
+		return errors.New("usage: harden <auto|agent|static|tool-demo|gemini|pentest|demo|inspect|scan|config|build|minify|run|verify|compare> [flags]; use harden <command> -h")
 	}
 	action := args[0]
 	f := flag.NewFlagSet("harden "+action, flag.ContinueOnError)

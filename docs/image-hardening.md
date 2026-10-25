@@ -13,7 +13,7 @@ go build -o bin/container-hardening-agent ./cmd/container-hardening-agent
 ```
 
 All imported actions are available as `./bin/breachbench harden image ACTION`.
-The non-conflicting `auto`, `agent`, `gemini`, `pentest`, `tool-demo`, `inspect`,
+The non-conflicting `auto`, `agent`, `static`, `gemini`, `pentest`, `tool-demo`, `inspect`,
 `scan`, `config`, `minify`, `run` and `compare` also work directly under `harden`.
 Use `harden image build`, `harden image verify` and `harden image demo` for the
 imported versions: direct `harden build/verify/demo` remain the native commands.
@@ -32,6 +32,79 @@ and SlimToolkit are needed only for their separate commands, not the default
 workflow. The imported implementation's
 [MIT notice](../internal/imagehardening/LICENSE.md) preserves the original
 L3montree attribution.
+
+## Static-only hardening
+
+Use this when the target application must not execute. It inspects an existing
+local Linux image, reads filesystem metadata from a stopped-container export,
+and repacks selected tool entrypoints without building or running image code.
+Neither application checks, containment probes, Slim profiling nor foreign-binary
+`ldd` execution are used. No archive is extracted onto the host.
+
+```sh
+static_parent=$(mktemp -d /tmp/breachbench-static.XXXXXX)
+./bin/breachbench harden static \
+  --image local/graphify:baseline-92741d1 \
+  --target "local/graphify:static-$(basename "$static_parent")" \
+  --artifacts "$static_parent/results" --format human
+```
+
+`static` defaults to Argon (`gemini-4-argon`), using the existing credential
+configuration below. It calls `inspect_image_static`, `remove_unneeded_tools`
+and `apply_static_hardening` in order. The bounded local tools do the real work;
+the AI cannot execute arbitrary commands, remove application/library files,
+upgrade components or weaken the runtime policy. `--mode tools` applies all
+eligible fixed tool-entrypoint removals without a model. Both modes create only
+a candidate, with `application_tested:false` and `compatibility:"unverified"`.
+
+No `--checks` is needed. Optional `--policy policy.json` uses the same runtime
+policy format below. A statically resolved existing non-root UID:GID is preserved;
+root/empty USER selects `65532:65532`, which can break ownership-sensitive apps.
+Unresolvable identities require an explicit numeric `policy.user`, never a guess.
+Shell startup scripts and enabled health checks conservatively retain required
+tools. This is not proof that remaining removals are unnecessary: dynamic
+subprocess calls, plugins and optional features may still require them. Only the
+fixed tool entrypoints are pruned, not entire packages, Python modules or all
+vulnerable components. App/runtime bytes and versions are retained unchanged.
+
+The default is read-only root, no additional writable directories, bounded
+ephemeral `/tmp`, dropped capabilities, no-new-privileges, Docker's default
+seccomp, resource limits and `network:none`. These are restrictive assumptions,
+not inferred needs. Explicit `internal` permits peers on one isolated bridge;
+`bridge` permits external egress. There is no inferred service-direction policy,
+automatic Compose-stack analysis, persistent-data migration or automatic
+credential removal. Writable-path aliases fail closed rather than being probed.
+
+Outputs are `report.json`, `plan.json`, and `compose.json` in a new private
+directory. The source image is preserved. The model sees filtered static facts,
+not raw environment values, command arguments, application source or raw files.
+Image defaults, including embedded credentials, remain in the candidate; review
+those separately. Runtime controls require the deployment configuration, not just
+the new image. The report separates actual entry removal from unknown runtime
+behavior. No runtime denial, compatibility or exploit-resistance claim is made.
+Use the existing `auto`/`agent` workflow with meaningful checks if runtime
+validation is later wanted.
+
+### Recorded Graphify static run
+
+On 2026-10-25, `static --mode argon` completed against the existing local
+Linux/arm64 Graphify image built from upstream commit
+`92741d162b2094ffc2fed58cfbd8ee823e9da62c` (v8 Dockerfile). Argon called the three
+ordered tools and removed six actual entries: `/usr/bin/sh`, `bash`, `dash`,
+`apt`, `apt-get`, and `dpkg` (all under `/usr/bin`). The existing primary
+UID:GID remained `10001:10001`; the original image ID was unchanged. Retained
+file bytes were copied, not patched. Python and its package libraries, including
+`pip`, were not removed or upgraded.
+
+The candidate is `local/graphify:static-argon-nf5rc9`, ID
+`sha256:54b6f229d2297a6356297d7f1ccec64f254530207054a35ce5c729431df73fa5`.
+The [recorded report](../demo/evidence/graphify-static-2026-10-25/report.json),
+[plan](../demo/evidence/graphify-static-2026-10-25/plan.json), and
+[deployment](../demo/evidence/graphify-static-2026-10-25/compose.json) contain
+filtered findings only. Neither source nor candidate application was started
+by this static run. Application compatibility, optional Graphify features,
+shell-access denial and exploit resistance remain unverified. Network denial
+and read-only controls are deployment settings, not tested results.
 
 ## Harden an existing image
 
