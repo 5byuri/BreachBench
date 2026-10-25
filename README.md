@@ -11,6 +11,54 @@ BreachBench runs adversarial security benchmarks against deterministically gener
 
 Built on the OCI Community’s [Container Hardening Work Bench](https://gitlab.opencode.de/oci-community/tools/container-hardening-work-bench).
 
+## One image in, a hardened candidate out
+
+```sh
+go build -o bin/breachbench .
+./bin/breachbench your-app:original
+```
+
+Or launch `./bin/breachbench` and enter the image at the prompt. It shows detected
+tools, startup constraints and identity, then creates a fresh local image and
+saves evidence automatically under `demo/runs/`. It prints the complete
+`docker run` command and saves a short `run.sh` launcher with the runtime protections.
+No target tag, temporary-directory variable, workload JSON or policy JSON is needed.
+The original image is never overwritten or started during this static flow.
+
+Existing Gemini environment/Keychain credentials are reused for Argon. Use
+`--mode tools` to use deterministic tools without an API key; there is no silent
+fallback when a requested AI call fails. `harden-image IMAGE` is an explicit
+alias; the older source-folder and advanced `harden` commands still work.
+
+For the local British Bank browser demo (requires Docker Engine 28+):
+
+```sh
+./bin/breachbench local/react2shell:unhardened --demo
+```
+
+Copy the printed Docker command. For this image it prefers `127.0.0.1:3001` to
+the declared container port `3000`, choosing a free local port if 3001 is busy;
+leave the original demo on port 3000 for a
+side-by-side comparison. `--demo` opts into bridge networking: **outbound access
+is allowed**, not blocked. It publishes only the first declared TCP port on
+loopback, preferring container port + 1 on the host (65535 uses 65534). Port
+availability can change after generation; if so, change it in the printed command.
+Without `--demo`, networking
+is disabled and no ports are published. EXPOSE is a hint, not proof of a website.
+
+The output is a **static candidate, not runtime-tested**. Necessary tools may
+remain; dynamic dependencies, writable paths and external services cannot be
+proven from an image alone. Declared persistent volumes still require explicit
+review and are not silently replaced with temporary storage. Image-level
+hardening alone cannot enforce read-only/capability/network protections: use
+the printed command or launcher. This does not patch React2Shell or prove that
+runtime code execution is prevented. Docker Engine versions below 28 are refused
+for `--demo`: [Docker documents that localhost-published ports on older engines
+can be reached from the same L2 network](https://docs.docker.com/engine/network/port-publishing/).
+This restriction does not block hardening without `--demo`. The existing
+Node-only [browser forwarder](docs/react2shell-browser-demo.md) remains the
+isolated, no-published-container-port path for the bank fixture on older engines.
+
 ## Application hardening
 
 Run the isolated before/after demo with `go run . harden demo /absolute/path/to/new-results`.

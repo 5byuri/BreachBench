@@ -16,6 +16,8 @@ import (
 type staticConfig struct {
 	Image, Target, Artifacts, Model, Mode string
 	Policy                                genericRuntimePolicy
+	Progress                              func(string)
+	Inspected                             func(staticImageAnalysis)
 }
 
 type staticReport struct {
@@ -133,6 +135,9 @@ func hardenStatic(ctx context.Context, config staticConfig) (report *staticRepor
 		resultErr = errors.Join(resultErr, writeToolJSON(filepath.Join(absolute, "report.json"), report))
 	}()
 	// Pin all inspection/repack operations to the same immutable local configuration ID.
+	if config.Progress != nil {
+		config.Progress("Inspecting image configuration and filesystem")
+	}
 	metadata, err := inspectLocalMetadata(ctx, config.Image)
 	if err != nil {
 		return report, err
@@ -156,10 +161,16 @@ func hardenStatic(ctx context.Context, config staticConfig) (report *staticRepor
 		return report, err
 	}
 	report.Policy = config.Policy
+	if config.Inspected != nil {
+		config.Inspected(analysis)
+	}
 	if config.Policy.Network == "bridge" {
 		report.Limitations = append(report.Limitations, "Explicit bridge permits external egress; no network containment is claimed")
 	}
 	apply := func(ctx context.Context, removals []string) error {
+		if config.Progress != nil {
+			config.Progress("Repacking image with selected tool removals")
+		}
 		report.SelectedTools = append([]string{}, removals...)
 		if err := writeToolJSON(filepath.Join(absolute, "plan.json"), map[string]any{"selected_tool_paths": removals, "runtime_policy": config.Policy, "application_tested": false}); err != nil {
 			return err
@@ -170,6 +181,9 @@ func hardenStatic(ctx context.Context, config staticConfig) (report *staticRepor
 			return err
 		}
 		report.CandidateCreated = true
+		if config.Progress != nil {
+			config.Progress("Saving runtime protections and evidence")
+		}
 		if err := writeToolJSON(filepath.Join(absolute, "compose.json"), genericCompose(config.Target, config.Policy, workloadSpec{})); err != nil {
 			return err
 		}
@@ -177,6 +191,9 @@ func hardenStatic(ctx context.Context, config staticConfig) (report *staticRepor
 		return nil
 	}
 	if config.Mode == "argon" {
+		if config.Progress != nil {
+			config.Progress("Argon is choosing bounded hardening actions")
+		}
 		evidence, err := runStaticAgent(ctx, config.Model, analysis, config.Policy, apply)
 		report.Agent = &evidence
 		return report, err
